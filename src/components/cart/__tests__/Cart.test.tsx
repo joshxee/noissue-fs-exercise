@@ -1,6 +1,7 @@
-import { Cart, ICartItem } from "./components/cart/Cart";
+import { render, screen } from "@testing-library/react";
+import { Cart, ICartItem } from "../Cart";
 
-function App() {
+test("renders learn react link", () => {
   const cartItems: ICartItem[] = [
     {
       price: 120,
@@ -18,16 +19,8 @@ function App() {
     },
   ];
 
-  return (
-    <div className="min-h-screen bg-gray-100 py-20">
-      <div className="container mx-auto px-10 md:px-40">
-        <h1 className="text-3xl font-bold text-indigo-900 text-left">
-          My Cart
-        </h1>
-        <Cart items={cartItems} />
-      </div>
-    </div>
-  );
-}
+  render(<Cart items={cartItems} />);
 
-export default App;
+  const total = screen.getByText("Total: $340");
+  expect(total).toBeInTheDocument();
+});
