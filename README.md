@@ -1,4 +1,4 @@
-# noissue FED Excercise - cart modifications
+# noissue FED Exercise - Cart Modifications
 
 This practical exercise is to be completed by candidates applying for frontend development roles. It is intended to allow the candidate to demonstrate their coding skills.
 
