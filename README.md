@@ -8,4 +8,4 @@ Please check out the branch you have been asked to complete and check out the RE
 Exercise List:
 
 - [Frontend exercise](https://bitbucket.org/noissueteam/candidate-test/src/noissue-fed-exercise/)
-- [Full Stack exercise](https://bitbucket.org/noissueteam/candidate-test/src/noissue-full-stack-exercise-legacy/) (old - not currently used)
+- [Full Stack exercise](https://bitbucket.org/noissueteam/candidate-test/src/noissue-full-stack-exercise/)
