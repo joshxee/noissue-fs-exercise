@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+
+<html class="light" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>noissue - Order Confirmation</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=Manrope:wght@400;600;700;800&amp;family=Space+Grotesk:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        /* Tactical Minimalism Utilities */
+        .glass-overlay {
+            background-color: rgba(252, 249, 248, 0.8); /* surface */
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+        .text-gradient-primary {
+            background: linear-gradient(to right, #02251f, #1a3b34);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .btn-primary-gradient {
+            background: linear-gradient(to right, #02251f, #1a3b34);
+        }
+        .ambient-shadow {
+            box-shadow: 0 12px 40px rgba(27, 28, 28, 0.05); /* on-surface at 5% */
+        }
+        .ghost-border-bottom {
+            border-bottom: 1px solid rgba(193, 200, 197, 0.2); /* outline-variant at 20% */
+        }
+    </style>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+                "primary-container": "#1a3b34",
+                "on-secondary": "#ffffff",
+                "on-surface": "#1b1c1c",
+                "on-secondary-fixed": "#151e17",
+                "surface-variant": "#e5e2e1",
+                "on-background": "#1b1c1c",
+                "on-tertiary-container": "#de8868",
+                "on-secondary-container": "#5b655c",
+                "secondary-container": "#d8e2d7",
+                "secondary-fixed-dim": "#bfc9bf",
+                "error-container": "#ffdad6",
+                "surface": "#fcf9f8",
+                "surface-container": "#f0eded",
+                "surface-container-low": "#f6f3f2",
+                "on-primary-container": "#83a59c",
+                "inverse-primary": "#aacec4",
+                "primary": "#02251f",
+                "surface-container-highest": "#e5e2e1",
+                "on-tertiary-fixed": "#380d00",
+                "on-error": "#ffffff",
+                "on-secondary-fixed-variant": "#404941",
+                "on-primary": "#ffffff",
+                "primary-fixed": "#c6eae0",
+                "outline-variant": "#c1c8c5",
+                "tertiary-fixed-dim": "#ffb59b",
+                "error": "#ba1a1a",
+                "on-tertiary-fixed-variant": "#74341a",
+                "on-surface-variant": "#414846",
+                "surface-tint": "#44655d",
+                "surface-bright": "#fcf9f8",
+                "background": "#fcf9f8",
+                "outline": "#717976",
+                "tertiary-fixed": "#ffdbcf",
+                "inverse-surface": "#303030",
+                "inverse-on-surface": "#f3f0ef",
+                "primary-fixed-dim": "#aacec4",
+                "on-error-container": "#93000a",
+                "on-primary-fixed": "#00201a",
+                "surface-dim": "#dcd9d9",
+                "surface-container-lowest": "#ffffff",
+                "tertiary": "#401000",
+                "on-tertiary": "#ffffff",
+                "secondary": "#576158",
+                "tertiary-container": "#5e230b",
+                "surface-container-high": "#eae7e7",
+                "secondary-fixed": "#dbe5da",
+                "on-primary-fixed-variant": "#2c4d45"
+        },
+        "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+        },
+        "spacing": {},
+        "fontFamily": {
+                "headline": [
+                        "Manrope"
+                ],
+                "body": [
+                        "Inter"
+                ],
+                "label": [
+                        "Space Grotesk"
+                ]
+        }
+},
+    },
+  }
+</script>
+</head>
+<body class="bg-background text-on-background font-body antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col">
+<!-- TopAppBar JSON Component -->
+<!-- Suppressed due to "Transactional" intent (Order Confirmation) -->
+<header class="w-full flex justify-center py-8 bg-background z-50">
+<a class="font-headline text-3xl font-black tracking-[-0.04em] text-primary" href="#">noissue</a>
+</header>
+<main class="flex-grow flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 py-12 md:py-24">
+<div class="max-w-4xl w-full">
+<!-- Success Header -->
+<div class="text-center mb-16">
+<div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-secondary-container text-on-secondary-container mb-6">
+<span class="material-symbols-outlined text-4xl" data-weight="fill" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</div>
+<h1 class="font-headline text-4xl md:text-5xl font-extrabold tracking-[-0.02em] text-primary mb-4">Order Confirmed.</h1>
+<p class="font-body text-lg text-on-surface-variant max-w-xl mx-auto">Your eco-friendly packaging is being prepped for the journey. Thank you for moving toward a circular economy.</p>
+<div class="mt-6 flex flex-col items-center">
+<span class="font-label text-sm text-outline uppercase tracking-widest">Order Reference</span>
+<span class="font-label text-lg font-semibold text-primary mt-1">#NI-8492-ECO</span>
+</div>
+</div>
+<!-- Bento Grid Layout -->
+<div class="grid grid-cols-1 md:grid-cols-12 gap-8 mb-16">
+<!-- Order Summary (Asymmetric large block) -->
+<div class="md:col-span-8 bg-surface-container-low rounded-none md:rounded-xl p-6 md:p-10 relative overflow-hidden">
+<h2 class="font-headline text-2xl font-bold text-primary mb-8 tracking-tight">The Archive</h2>
+<div class="space-y-8">
+<!-- Item 1 -->
+<div class="flex flex-col sm:flex-row gap-6 ghost-border-bottom pb-8">
+<div class="w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 relative">
+<img alt="Custom Compostable Mailers" class="w-full h-full object-cover" data-alt="stack of matte black compostable mailer bags with white minimal logo on warm gray textured background" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD91hCMJoY8At5JS28_bMmF0bPuZ0ei07ImSC8Vl9Gd5STLjDMYl6WTxS9PW9QilY5CUcPL-wkB7Fw7Ae1EFt5-2IdZYcGU0B05L1Grn5qoiyQfpvL2Rl5fQ9suoC5uuHemG4sUcm2LHQZhvfDitjXJZEdR5Hx8kIpdHaTLdyVSUbNy44E_PvZtAvCwqhldUcWbQXDLeAWUpRu7WV-XopKy9eDupMP3pJ_zFRAVKtbJjs8B61MIAiX_1FyY29N_TNJVL_gAavW00ik"/>
+</div>
+<div class="flex-grow flex flex-col justify-center">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline text-lg font-bold text-on-surface">Custom Compostable Mailers</h3>
+<span class="font-label text-md font-semibold text-primary">$145.00</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant mb-3">Matte Black / 10x13" / Qty: 250</p>
+<div class="flex flex-wrap gap-2 mt-auto">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label text-[10px] uppercase tracking-widest">
+                                        Compostable
+                                    </span>
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-surface text-on-surface-variant font-label text-[10px] uppercase tracking-widest border border-outline-variant/30">
+                                        Soy Ink
+                                    </span>
+</div>
+</div>
+</div>
+<!-- Item 2 -->
+<div class="flex flex-col sm:flex-row gap-6 ghost-border-bottom pb-8">
+<div class="w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 relative">
+<img alt="Recycled Tissue Paper" class="w-full h-full object-cover" data-alt="close up of translucent white custom branded tissue paper folded neatly with soft directional lighting" src="https://lh3.googleusercontent.com/aida-public/AB6AXuC84J0uGVmUt69-EQn1iMh0LLkxA6KxVqGyBAZvNwzX0p4I8AkQb1jNadRvB33Gk6vLrfQhMAErlRGElCwkXHDKAJuN1XHP301HsnvFFWa1a_RHIE7cZXisqdr_KpOhiW6oAcvj45AXuaQZHjbymLySIIvT5zdFS2S_8gvF5zb6TbLN4IFhTIEuFvqbhUW-Ei0OKxfeZYpE17_iYfhCoR_tuaz9FWlBapFjPsOk_vznXkJtr-dKvKn378rtQlvzELH9D6rY77UQhgM"/>
+</div>
+<div class="flex-grow flex flex-col justify-center">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline text-lg font-bold text-on-surface">Recycled Tissue Paper</h3>
+<span class="font-label text-md font-semibold text-primary">$85.00</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant mb-3">Off-White / 15x20" / Qty: 500</p>
+<div class="flex flex-wrap gap-2 mt-auto">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label text-[10px] uppercase tracking-widest">
+                                        FSC Certified
+                                    </span>
+</div>
+</div>
+</div>
+<!-- Item 3 -->
+<div class="flex flex-col sm:flex-row gap-6">
+<div class="w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 relative">
+<img alt="Eco-friendly Stickers" class="w-full h-full object-cover" data-alt="roll of circular custom branded paper stickers on a wooden surface with natural daylight" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCIx8MKwSTAjtWlHHDLiy3PlEI7rJ5ovByq7LPNza_pL04QNa5SsneGxePasunBy3c0S8L3yRR091V2upJUF-5QWETkP3DKvhMFDZjD-BS25tCpSDnp8bTcuLccqg5vkOrYpAIf1ERNLIszH8oJUVPTX3qEmqGGPBHYPD4eTqRTB1LHyK8nHMKQa0K_TtREJRHfF6gjNNP63zfoffEiiVuvAji03i2DC4ti4VC0YdrUTLMTf42Xei2SxVvArw8CBML0hg6UZokEdO4"/>
+</div>
+<div class="flex-grow flex flex-col justify-center">
+<div class="flex justify-between items-start mb-2">
+<h3 class="font-headline text-lg font-bold text-on-surface">Eco-friendly Stickers</h3>
+<span class="font-label text-md font-semibold text-primary">$45.00</span>
+</div>
+<p class="font-body text-sm text-on-surface-variant mb-3">Circle 2" / Roll / Qty: 1000</p>
+<div class="flex flex-wrap gap-2 mt-auto">
+<span class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label text-[10px] uppercase tracking-widest">
+                                        Acid-Free
+                                    </span>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Receipt & Details (Narrow column) -->
+<div class="md:col-span-4 flex flex-col gap-8">
+<!-- Receipt Card -->
+<div class="bg-surface-container-lowest rounded-xl p-8 ambient-shadow relative z-10">
+<h3 class="font-headline text-xl font-bold text-primary mb-6">Summary</h3>
+<div class="space-y-4 font-body text-sm mb-6 ghost-border-bottom pb-6">
+<div class="flex justify-between text-on-surface-variant">
+<span>Subtotal</span>
+<span>$275.00</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Carbon Neutral Shipping</span>
+<span>$12.50</span>
+</div>
+<div class="flex justify-between text-on-surface-variant">
+<span>Taxes</span>
+<span>$22.00</span>
+</div>
+</div>
+<div class="flex justify-between items-center mb-8">
+<span class="font-headline font-bold text-on-surface">Total</span>
+<span class="font-label text-xl font-bold text-primary">$309.50</span>
+</div>
+<a class="block w-full text-center py-4 rounded-xl btn-primary-gradient text-on-primary font-headline font-bold tracking-wide transition-opacity hover:opacity-90" href="#">
+                            Track Shipment
+                        </a>
+</div>
+<!-- Shipping Info -->
+<div class="bg-surface-container-low rounded-xl p-8">
+<div class="flex items-center gap-3 mb-4 text-primary">
+<span class="material-symbols-outlined">local_shipping</span>
+<h4 class="font-headline font-bold">Shipping To</h4>
+</div>
+<address class="font-body text-sm text-on-surface-variant not-italic leading-relaxed">
+                            Studio Minimal<br/>
+                            123 Artisan Way, Suite B<br/>
+                            Portland, OR 97209<br/>
+                            United States
+                        </address>
+<div class="mt-4 pt-4 ghost-border-bottom border-t-0">
+<span class="font-label text-xs uppercase tracking-widest text-outline block mb-1">Est. Delivery</span>
+<span class="font-body text-sm font-semibold text-on-surface">Oct 24 - Oct 28</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Sustainability Impact Section -->
+<div class="bg-primary text-on-primary rounded-xl p-8 md:p-12 overflow-hidden relative">
+<!-- Decorative subtle texture/gradient -->
+<div class="absolute inset-0 opacity-20" style="background: radial-gradient(circle at top right, #1a3b34, transparent 70%);"></div>
+<div class="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+<div>
+<span class="font-label text-sm uppercase tracking-widest text-primary-fixed block mb-4">The Impact</span>
+<h2 class="font-headline text-3xl md:text-4xl font-extrabold tracking-tight mb-4">Planting Trees. Packaging Better.</h2>
+<p class="font-body text-on-primary-fixed-variant text-lg max-w-md">By choosing our compostable and recycled materials, you've contributed to a lower footprint. We're planting a tree with the Eco-Alliance for this order.</p>
+</div>
+<div class="flex flex-col sm:flex-row gap-6 justify-end items-start md:items-center">
+<div class="bg-primary-container rounded-lg p-6 flex-1 max-w-[200px]">
+<span class="material-symbols-outlined text-4xl text-primary-fixed mb-3">nature</span>
+<span class="block font-headline font-bold text-xl mb-1">+1 Tree</span>
+<span class="font-label text-xs uppercase tracking-widest text-on-primary-container">Planted</span>
+</div>
+<div class="bg-primary-container rounded-lg p-6 flex-1 max-w-[200px]">
+<span class="material-symbols-outlined text-4xl text-primary-fixed mb-3">recycling</span>
+<span class="block font-headline font-bold text-xl mb-1">100%</span>
+<span class="font-label text-xs uppercase tracking-widest text-on-primary-container">Circular</span>
+</div>
+</div>
+</div>
+</div>
+<!-- Return to Store CTA -->
+<div class="mt-16 text-center">
+<a class="inline-flex items-center gap-2 font-headline font-semibold text-primary hover:text-surface-tint transition-colors group" href="#">
+<span class="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
+                    Return to Store
+                </a>
+</div>
+</div>
+</main>
+<!-- Footer JSON Component (Suppressed due to transactional nature of Order Confirmation, keeping focus tight) -->
+</body></html>

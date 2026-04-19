@@ -8,9 +8,15 @@
   },
   "dependencies": {
     "@elysiajs/static": "^1.4.9",
+    "clsx": "^2.1.1",
     "elysia": "latest",
+    "lucide-react": "^1.8.0",
+    "radix-ui": "^1.4.3",
     "react": "^19.2.5",
-    "react-dom": "^19.2.5"
+    "react-dom": "^19.2.5",
+    "react-router-dom": "^7.14.1",
+    "tailwind-merge": "^3.5.0",
+    "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",
