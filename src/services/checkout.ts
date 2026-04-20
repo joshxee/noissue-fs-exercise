@@ -1,6 +1,25 @@
 import { db } from '../db/db';
 import { cartItems, shippingFees, purchaseOrders, purchaseOrderItems, products, suppliers } from '../db/schema';
 
+type GeneratedPO = {
+  poId: number;
+  supplierId: string;
+  supplierName: string;
+  items: {
+    poId: number;
+    productSku: string;
+    quantity: number;
+    total: number;
+    productName: string;
+    productType: string;
+  }[];
+  itemTotal: number;
+  shippingFee: number;
+  orderTotal: number;
+  currency: string;
+  symbol: string;
+};
+
 export async function processCheckout() {
   // 1. Fetch all cart items
   const allCartItems = db.select().from(cartItems).all();
@@ -15,17 +34,17 @@ export async function processCheckout() {
   const supplierMap = new Map(allSuppliers.map(s => [s.id, s]));
 
   // 4. Group cart items by supplier
-  const itemsBySupplier = new Map<string, typeof allCartItems>();
-  for (const item of allCartItems) {
-    if (!itemsBySupplier.has(item.supplierId)) {
-      itemsBySupplier.set(item.supplierId, []);
-    }
-    itemsBySupplier.get(item.supplierId)!.push(item);
-  }
+  const itemsBySupplier = allCartItems.reduce<Map<string, typeof allCartItems>>(
+    (acc, item) => {
+      const existing = acc.get(item.supplierId) ?? [];
+      return acc.set(item.supplierId, [...existing, item]);
+    },
+    new Map()
+  );
 
-  const generatedPOs = [];
+  const generatedPOs: GeneratedPO[] = [];
 
-  // 4. Generate Purchase Orders
+  // 5. Generate Purchase Orders
   for (const [supplierId, items] of itemsBySupplier.entries()) {
     // Calculate item total
     const itemTotal = items.reduce((sum, item) => sum + item.total, 0);

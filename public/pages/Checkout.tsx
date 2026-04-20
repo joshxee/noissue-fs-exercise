@@ -58,7 +58,10 @@ export default function Checkout() {
   React.useEffect(() => {
     setCartState({ status: 'loading' });
     fetch('/api/cart')
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((json: CartResponse | CartErrorResponse) => {
         if (json.success) {
           setCartState({ status: 'success', data: json.data });
@@ -69,20 +72,27 @@ export default function Checkout() {
       .catch(() => setCartState({ status: 'error', message: 'Unable to load cart' }));
   }, []);
 
-  const handleField = (field: keyof FormState) => (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
-  ) => setForm(prev => ({ ...prev, [field]: e.target.value }));
+  const handleField = React.useCallback(
+    (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
+      setForm(prev => ({ ...prev, [field]: e.target.value })),
+    []
+  );
 
-  const handleCheckbox = (field: keyof FormState) => (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => setForm(prev => ({ ...prev, [field]: e.target.checked }));
+  const handleCheckbox = React.useCallback(
+    (field: keyof FormState) => (e: React.ChangeEvent<HTMLInputElement>) =>
+      setForm(prev => ({ ...prev, [field]: e.target.checked })),
+    []
+  );
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitState({ status: 'loading' });
 
     fetch('/api/checkout', { method: 'POST' })
-      .then(res => res.json())
+      .then(res => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        return res.json();
+      })
       .then((json: CheckoutResponse | CheckoutErrorResponse) => {
         if (json.success) {
           const shippingAddress: ShippingAddress = {

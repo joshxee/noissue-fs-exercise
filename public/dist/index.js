@@ -19326,7 +19326,11 @@ function Checkout() {
   const [form, setForm] = import_react.default.useState(INITIAL_FORM);
   import_react.default.useEffect(() => {
     setCartState({ status: "loading" });
-    fetch("/api/cart").then((res) => res.json()).then((json) => {
+    fetch("/api/cart").then((res) => {
+      if (!res.ok)
+        throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }).then((json) => {
       if (json.success) {
         setCartState({ status: "success", data: json.data });
       } else {
@@ -19334,12 +19338,16 @@ function Checkout() {
       }
     }).catch(() => setCartState({ status: "error", message: "Unable to load cart" }));
   }, []);
-  const handleField = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
-  const handleCheckbox = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.checked }));
+  const handleField = import_react.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value })), []);
+  const handleCheckbox = import_react.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.checked })), []);
   const handleSubmit = (e) => {
     e.preventDefault();
     setSubmitState({ status: "loading" });
-    fetch("/api/checkout", { method: "POST" }).then((res) => res.json()).then((json) => {
+    fetch("/api/checkout", { method: "POST" }).then((res) => {
+      if (!res.ok)
+        throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }).then((json) => {
       if (json.success) {
         const shippingAddress = {
           email: form.email,
@@ -20018,7 +20026,7 @@ var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
 function OrderConfirmation() {
   const location = useLocation();
   const state = location.state;
-  if (!state || !state.purchaseOrders || state.purchaseOrders.length === 0) {
+  if (!state?.purchaseOrders?.length || !state.shippingAddress) {
     return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(Navigate, {
       to: "/",
       replace: true

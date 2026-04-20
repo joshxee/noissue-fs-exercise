@@ -6,7 +6,7 @@ export default function OrderConfirmation() {
   const location = useLocation();
   const state = location.state as ConfirmationState | null;
 
-  if (!state || !state.purchaseOrders || state.purchaseOrders.length === 0) {
+  if (!state?.purchaseOrders?.length || !state.shippingAddress) {
     return <Navigate to="/" replace />;
   }
 

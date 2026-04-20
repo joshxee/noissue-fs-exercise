@@ -78,7 +78,7 @@ export const cartRoute = new Elysia({ prefix: '/api' })
         success: true,
         data: { suppliers: supplierGroups, grandTotal, shippingTotal, currency, symbol },
       };
-    } catch (error) {
+    } catch {
       return { success: false, error: 'Failed to load cart' };
     }
   });
