@@ -19306,10 +19306,11 @@ function useViewTransitionState(to, { relative } = {}) {
 // public/pages/Checkout.tsx
 var import_react = __toESM(require_react(), 1);
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
+var SHIPPING_COST = 50;
 var INITIAL_FORM = {
   email: "",
   newsletter: false,
-  country: "US",
+  country: "NZ",
   firstName: "",
   lastName: "",
   address: "",
@@ -19317,13 +19318,77 @@ var INITIAL_FORM = {
   city: "",
   state: "",
   zip: "",
-  paymentMethod: "credit_card"
+  cardNumber: "",
+  cardName: "",
+  cardExpiry: "",
+  cardCvv: ""
 };
+function luhnCheck(num) {
+  const digits = num.split("").reverse().map(Number);
+  const sum = digits.reduce((acc, d, i) => {
+    if (i % 2 === 1) {
+      const doubled = d * 2;
+      return acc + (doubled > 9 ? doubled - 9 : doubled);
+    }
+    return acc + d;
+  }, 0);
+  return sum % 10 === 0;
+}
+function validateForm(form) {
+  const errors = {};
+  if (!form.email) {
+    errors.email = "Email is required";
+  } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+    errors.email = "Enter a valid email address";
+  }
+  if (!form.address.trim())
+    errors.address = "Address is required";
+  if (!form.city.trim())
+    errors.city = "City is required";
+  if (!form.zip.trim())
+    errors.zip = "Postcode is required";
+  const rawCard = form.cardNumber.replace(/\s/g, "");
+  if (!rawCard) {
+    errors.cardNumber = "Card number is required";
+  } else if (rawCard.length !== 16 || !luhnCheck(rawCard)) {
+    errors.cardNumber = "Enter a valid card number";
+  }
+  if (!form.cardName.trim()) {
+    errors.cardName = "Cardholder name is required";
+  }
+  if (!form.cardExpiry) {
+    errors.cardExpiry = "Expiry date is required";
+  } else {
+    const parts = form.cardExpiry.split("/");
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      const month = parseInt(parts[0], 10);
+      const year = parseInt(parts[1], 10) + 2000;
+      const now = new Date;
+      const expDate = new Date(year, month - 1);
+      if (month < 1 || month > 12 || expDate < new Date(now.getFullYear(), now.getMonth())) {
+        errors.cardExpiry = "Enter a valid expiry date";
+      }
+    } else {
+      errors.cardExpiry = "Enter a valid expiry date";
+    }
+  }
+  if (!form.cardCvv) {
+    errors.cardCvv = "CVV is required";
+  } else if (!/^\d{3,4}$/.test(form.cardCvv)) {
+    errors.cardCvv = "Enter a valid CVV";
+  }
+  return errors;
+}
+var LABEL_CLASS = "absolute left-0 -top-4 text-xs text-outline font-label pointer-events-none " + "peer-placeholder-shown:top-3 peer-placeholder-shown:text-base " + "peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary " + "transition-all duration-200";
+var INPUT_CLASS = "w-full bg-transparent border-0 border-b border-outline-variant/20 " + "focus:border-primary focus:ring-0 text-on-surface px-0 py-3 " + "peer transition-colors placeholder-transparent";
 function Checkout() {
   const navigate = useNavigate();
   const [cartState, setCartState] = import_react.default.useState({ status: "idle" });
   const [submitState, setSubmitState] = import_react.default.useState({ status: "idle" });
   const [form, setForm] = import_react.default.useState(INITIAL_FORM);
+  const [touched, setTouched] = import_react.default.useState({});
+  const [shippingSelected, setShippingSelected] = import_react.default.useState(false);
+  const [submitAttempted, setSubmitAttempted] = import_react.default.useState(false);
   import_react.default.useEffect(() => {
     setCartState({ status: "loading" });
     fetch("/api/cart").then((res) => {
@@ -19331,17 +19396,41 @@ function Checkout() {
         throw new Error(`HTTP ${res.status}`);
       return res.json();
     }).then((json) => {
-      if (json.success) {
+      if (json.success)
         setCartState({ status: "success", data: json.data });
-      } else {
+      else
         setCartState({ status: "error", message: json.error });
-      }
     }).catch(() => setCartState({ status: "error", message: "Unable to load cart" }));
   }, []);
+  const formErrors = import_react.default.useMemo(() => validateForm(form), [form]);
+  const canSubmit = Object.keys(formErrors).length === 0 && shippingSelected;
+  const addressComplete = form.address.trim().length > 0 && form.city.trim().length > 0 && form.zip.trim().length > 0 && form.country.length > 0;
   const handleField = import_react.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value })), []);
   const handleCheckbox = import_react.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.checked })), []);
+  const handleCardNumber = import_react.default.useCallback((e) => {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
+    const formatted = raw.replace(/(.{4})/g, "$1 ").trim();
+    setForm((prev) => ({ ...prev, cardNumber: formatted }));
+  }, []);
+  const handleCardExpiry = import_react.default.useCallback((e) => {
+    let raw = e.target.value.replace(/\D/g, "").slice(0, 4);
+    if (raw.length > 2)
+      raw = `${raw.slice(0, 2)}/${raw.slice(2)}`;
+    setForm((prev) => ({ ...prev, cardExpiry: raw }));
+  }, []);
+  const handleBlur = import_react.default.useCallback((field) => () => setTouched((prev) => ({ ...prev, [field]: true })), []);
+  const showError = (field) => touched[field] || submitAttempted ? formErrors[field] : undefined;
   const handleSubmit = (e) => {
     e.preventDefault();
+    setSubmitAttempted(true);
+    if (!canSubmit) {
+      const allTouched = {};
+      Object.keys(INITIAL_FORM).forEach((k) => {
+        allTouched[k] = true;
+      });
+      setTouched(allTouched);
+      return;
+    }
     setSubmitState({ status: "loading" });
     fetch("/api/checkout", { method: "POST" }).then((res) => {
       if (!res.ok)
@@ -19360,19 +19449,18 @@ function Checkout() {
           zip: form.zip,
           country: form.country
         };
-        const state = {
+        const confirmState = {
           purchaseOrders: json.data.purchaseOrders,
           shippingAddress
         };
-        navigate("/confirmation", { state });
+        navigate("/confirmation", { state: confirmState });
       } else {
         setSubmitState({ status: "error", message: json.error });
       }
     }).catch(() => setSubmitState({ status: "error", message: "Checkout failed. Please try again." }));
   };
   const subtotal = cartState.status === "success" ? cartState.data.grandTotal : null;
-  const shippingTotal = cartState.status === "success" ? cartState.data.shippingTotal : null;
-  const total = subtotal !== null && shippingTotal !== null ? subtotal + shippingTotal : null;
+  const total = subtotal !== null ? subtotal + (shippingSelected ? SHIPPING_COST : 0) : null;
   const symbol = cartState.status === "success" ? cartState.data.symbol : "$";
   const currency = cartState.status === "success" ? cartState.data.currency : "NZD";
   return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
@@ -19382,7 +19470,7 @@ function Checkout() {
         className: "bg-[#fcf9f8]/80 dark:bg-[#1b1c1c]/80 backdrop-blur-xl w-full sticky top-0 z-50",
         children: [
           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-            className: "flex justify-between items-center w-full px-6 py-4 max-w-7xl mx-auto",
+            className: "grid grid-cols-3 items-center w-full px-6 py-4 max-w-7xl mx-auto",
             children: [
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("nav", {
                 className: "hidden md:flex gap-6",
@@ -19405,12 +19493,12 @@ function Checkout() {
                 ]
               }, undefined, true, undefined, this),
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
-                className: "font-['Manrope'] text-2xl font-black tracking-[-0.04em] text-[#02251f] dark:text-[#fcf9f8] mx-auto md:mx-0",
+                className: "font-['Manrope'] text-2xl font-black tracking-[-0.04em] text-[#02251f] dark:text-[#fcf9f8] justify-self-center",
                 href: "#",
                 children: "noissue"
               }, undefined, false, undefined, this),
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                className: "flex gap-4 items-center",
+                className: "flex gap-4 items-center justify-self-end",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
                     type: "button",
@@ -19447,7 +19535,7 @@ function Checkout() {
             onSubmit: handleSubmit,
             children: [
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl transition-all duration-300",
+                className: "bg-surface-container-low p-8 rounded-xl",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
                     className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-8",
@@ -19457,25 +19545,31 @@ function Checkout() {
                     className: "space-y-6",
                     children: [
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative",
+                        className: "relative pt-4",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
+                            className: INPUT_CLASS,
                             id: "email",
                             placeholder: "Email Address",
                             type: "email",
                             value: form.email,
-                            onChange: handleField("email")
+                            onChange: handleField("email"),
+                            onBlur: handleBlur("email")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                            className: LABEL_CLASS,
                             htmlFor: "email",
                             children: "Email Address"
+                          }, undefined, false, undefined, this),
+                          showError("email") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                            role: "alert",
+                            className: "mt-1 text-xs text-red-500",
+                            children: showError("email")
                           }, undefined, false, undefined, this)
                         ]
                       }, undefined, true, undefined, this),
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "flex items-center gap-3 mt-4",
+                        className: "flex items-center gap-3",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
                             className: "rounded-DEFAULT border-outline-variant/50 text-primary focus:ring-primary bg-transparent w-4 h-4",
@@ -19496,7 +19590,7 @@ function Checkout() {
                 ]
               }, undefined, true, undefined, this),
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl transition-all duration-300",
+                className: "bg-surface-container-low p-8 rounded-xl",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
                     className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-8",
@@ -19508,12 +19602,25 @@ function Checkout() {
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                         className: "relative",
                         children: [
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                            className: "block text-xs text-outline font-label mb-1",
+                            htmlFor: "country",
+                            children: "Country"
+                          }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("select", {
                             className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body",
                             id: "country",
                             value: form.country,
                             onChange: handleField("country"),
                             children: [
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
+                                value: "NZ",
+                                children: "New Zealand"
+                              }, undefined, false, undefined, this),
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
+                                value: "AU",
+                                children: "Australia"
+                              }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
                                 value: "US",
                                 children: "United States"
@@ -19523,17 +19630,13 @@ function Checkout() {
                                 children: "Canada"
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                value: "UK",
+                                value: "GB",
                                 children: "United Kingdom"
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                value: "AU",
-                                children: "Australia"
                               }, undefined, false, undefined, this)
                             ]
                           }, undefined, true, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                            className: "material-symbols-outlined absolute right-0 top-3 text-outline pointer-events-none",
+                            className: "material-symbols-outlined absolute right-0 bottom-3 text-outline pointer-events-none",
                             "data-icon": "expand_more",
                             children: "expand_more"
                           }, undefined, false, undefined, this)
@@ -19543,36 +19646,38 @@ function Checkout() {
                         className: "grid grid-cols-1 md:grid-cols-2 gap-6",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative",
+                            className: "relative pt-4",
                             children: [
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
+                                className: INPUT_CLASS,
                                 id: "firstName",
                                 placeholder: "First Name",
                                 type: "text",
                                 value: form.firstName,
-                                onChange: handleField("firstName")
+                                onChange: handleField("firstName"),
+                                onBlur: handleBlur("firstName")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                                className: LABEL_CLASS,
                                 htmlFor: "firstName",
                                 children: "First Name"
                               }, undefined, false, undefined, this)
                             ]
                           }, undefined, true, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative",
+                            className: "relative pt-4",
                             children: [
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
+                                className: INPUT_CLASS,
                                 id: "lastName",
                                 placeholder: "Last Name",
                                 type: "text",
                                 value: form.lastName,
-                                onChange: handleField("lastName")
+                                onChange: handleField("lastName"),
+                                onBlur: handleBlur("lastName")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                                className: LABEL_CLASS,
                                 htmlFor: "lastName",
                                 children: "Last Name"
                               }, undefined, false, undefined, this)
@@ -19581,28 +19686,34 @@ function Checkout() {
                         ]
                       }, undefined, true, undefined, this),
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative",
+                        className: "relative pt-4",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
+                            className: INPUT_CLASS,
                             id: "address",
-                            placeholder: "Address",
+                            placeholder: "Address Line 1",
                             type: "text",
                             value: form.address,
-                            onChange: handleField("address")
+                            onChange: handleField("address"),
+                            onBlur: handleBlur("address")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                            className: LABEL_CLASS,
                             htmlFor: "address",
-                            children: "Address"
+                            children: "Address Line 1"
+                          }, undefined, false, undefined, this),
+                          showError("address") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                            role: "alert",
+                            className: "mt-1 text-xs text-red-500",
+                            children: showError("address")
                           }, undefined, false, undefined, this)
                         ]
                       }, undefined, true, undefined, this),
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative",
+                        className: "relative pt-4",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
+                            className: INPUT_CLASS,
                             id: "apartment",
                             placeholder: "Apartment, suite, etc. (optional)",
                             type: "text",
@@ -19610,7 +19721,7 @@ function Checkout() {
                             onChange: handleField("apartment")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                            className: LABEL_CLASS,
                             htmlFor: "apartment",
                             children: "Apartment, suite, etc. (optional)"
                           }, undefined, false, undefined, this)
@@ -19620,73 +19731,68 @@ function Checkout() {
                         className: "grid grid-cols-1 md:grid-cols-3 gap-6",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative md:col-span-1",
+                            className: "relative pt-4",
                             children: [
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
+                                className: INPUT_CLASS,
                                 id: "city",
                                 placeholder: "City",
                                 type: "text",
                                 value: form.city,
-                                onChange: handleField("city")
+                                onChange: handleField("city"),
+                                onBlur: handleBlur("city")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                                className: LABEL_CLASS,
                                 htmlFor: "city",
                                 children: "City"
+                              }, undefined, false, undefined, this),
+                              showError("city") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                                role: "alert",
+                                className: "mt-1 text-xs text-red-500",
+                                children: showError("city")
                               }, undefined, false, undefined, this)
                             ]
                           }, undefined, true, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative md:col-span-1",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("select", {
-                                className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body text-outline",
-                                id: "state",
-                                value: form.state,
-                                onChange: handleField("state"),
-                                children: [
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                    disabled: true,
-                                    value: "",
-                                    children: "State"
-                                  }, undefined, false, undefined, this),
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                    value: "CA",
-                                    children: "California"
-                                  }, undefined, false, undefined, this),
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                    value: "NY",
-                                    children: "New York"
-                                  }, undefined, false, undefined, this),
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                    value: "TX",
-                                    children: "Texas"
-                                  }, undefined, false, undefined, this)
-                                ]
-                              }, undefined, true, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                                className: "material-symbols-outlined absolute right-0 top-3 text-outline pointer-events-none",
-                                "data-icon": "expand_more",
-                                children: "expand_more"
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative md:col-span-1",
+                            className: "relative pt-4",
                             children: [
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
-                                id: "zip",
-                                placeholder: "ZIP code",
+                                className: INPUT_CLASS,
+                                id: "state",
+                                placeholder: "State / Region",
                                 type: "text",
-                                value: form.zip,
-                                onChange: handleField("zip")
+                                value: form.state,
+                                onChange: handleField("state")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                                className: LABEL_CLASS,
+                                htmlFor: "state",
+                                children: "State / Region"
+                              }, undefined, false, undefined, this)
+                            ]
+                          }, undefined, true, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "relative pt-4",
+                            children: [
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                                className: INPUT_CLASS,
+                                id: "zip",
+                                placeholder: "Postcode",
+                                type: "text",
+                                value: form.zip,
+                                onChange: handleField("zip"),
+                                onBlur: handleBlur("zip")
+                              }, undefined, false, undefined, this),
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                                className: LABEL_CLASS,
                                 htmlFor: "zip",
-                                children: "ZIP code"
+                                children: "Postcode"
+                              }, undefined, false, undefined, this),
+                              showError("zip") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                                role: "alert",
+                                className: "mt-1 text-xs text-red-500",
+                                children: showError("zip")
                               }, undefined, false, undefined, this)
                             ]
                           }, undefined, true, undefined, this)
@@ -19697,13 +19803,13 @@ function Checkout() {
                 ]
               }, undefined, true, undefined, this),
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl transition-all duration-300",
+                className: "bg-surface-container-low p-8 rounded-xl",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
                     className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-6",
                     children: "Shipping method"
                   }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                  !addressComplete ? /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                     className: "bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3",
                     children: [
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
@@ -19713,11 +19819,39 @@ function Checkout() {
                       }, undefined, false, undefined, this),
                       "Enter your shipping address to view available shipping methods."
                     ]
+                  }, undefined, true, undefined, this) : /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                    className: `flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${shippingSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface hover:bg-surface-container-highest"}`,
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        type: "radio",
+                        name: "shipping",
+                        className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
+                        checked: shippingSelected,
+                        onChange: () => setShippingSelected(true)
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "flex-grow",
+                        children: [
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "font-body text-on-surface font-medium",
+                            children: "Standard Shipping"
+                          }, undefined, false, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "font-body text-xs text-on-surface-variant mt-0.5",
+                            children: "Estimated 3–5 business days"
+                          }, undefined, false, undefined, this)
+                        ]
+                      }, undefined, true, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "font-label font-semibold text-on-surface",
+                        children: "NZD $50.00"
+                      }, undefined, false, undefined, this)
+                    ]
                   }, undefined, true, undefined, this)
                 ]
               }, undefined, true, undefined, this),
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl transition-all duration-300",
+                className: "bg-surface-container-low p-8 rounded-xl",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
                     className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-2",
@@ -19728,48 +19862,143 @@ function Checkout() {
                     children: "All transactions are secure and encrypted."
                   }, undefined, false, undefined, this),
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "space-y-4",
+                    className: "border border-primary rounded-xl overflow-hidden",
                     children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                        className: "flex items-center gap-4 p-4 border border-outline-variant/20 rounded-lg cursor-pointer bg-surface transition-colors hover:bg-surface-container-highest",
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "flex items-center gap-4 p-4 bg-primary/5",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
                             className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
                             name: "payment",
                             type: "radio",
-                            value: "credit_card",
-                            checked: form.paymentMethod === "credit_card",
-                            onChange: handleField("paymentMethod")
+                            checked: true,
+                            readOnly: true
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                             className: "flex-grow font-body text-on-surface font-medium",
                             children: "Credit card"
                           }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "flex gap-2 text-outline",
-                            children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                              className: "material-symbols-outlined",
-                              "data-icon": "credit_card",
-                              children: "credit_card"
-                            }, undefined, false, undefined, this)
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                            className: "material-symbols-outlined text-xl text-outline",
+                            "data-icon": "credit_card",
+                            children: "credit_card"
                           }, undefined, false, undefined, this)
                         ]
                       }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                        className: "flex items-center gap-4 p-4 border border-outline-variant/20 rounded-lg cursor-pointer bg-surface transition-colors hover:bg-surface-container-highest",
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "p-6 border-t border-outline-variant/10 bg-surface space-y-6",
                         children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
-                            name: "payment",
-                            type: "radio",
-                            value: "paypal",
-                            checked: form.paymentMethod === "paypal",
-                            onChange: handleField("paymentMethod")
-                          }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "flex-grow font-body text-on-surface font-medium",
-                            children: "PayPal"
-                          }, undefined, false, undefined, this)
+                            className: "relative pt-4",
+                            children: [
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                                className: INPUT_CLASS,
+                                id: "cardNumber",
+                                placeholder: "Card number",
+                                type: "text",
+                                inputMode: "numeric",
+                                maxLength: 19,
+                                autoComplete: "cc-number",
+                                value: form.cardNumber,
+                                onChange: handleCardNumber,
+                                onBlur: handleBlur("cardNumber")
+                              }, undefined, false, undefined, this),
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                                className: LABEL_CLASS,
+                                htmlFor: "cardNumber",
+                                children: "Card number"
+                              }, undefined, false, undefined, this),
+                              showError("cardNumber") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                                role: "alert",
+                                className: "mt-1 text-xs text-red-500",
+                                children: showError("cardNumber")
+                              }, undefined, false, undefined, this)
+                            ]
+                          }, undefined, true, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "relative pt-4",
+                            children: [
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                                className: INPUT_CLASS,
+                                id: "cardName",
+                                placeholder: "Cardholder name",
+                                type: "text",
+                                autoComplete: "cc-name",
+                                value: form.cardName,
+                                onChange: handleField("cardName"),
+                                onBlur: handleBlur("cardName")
+                              }, undefined, false, undefined, this),
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                                className: LABEL_CLASS,
+                                htmlFor: "cardName",
+                                children: "Cardholder name"
+                              }, undefined, false, undefined, this),
+                              showError("cardName") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                                role: "alert",
+                                className: "mt-1 text-xs text-red-500",
+                                children: showError("cardName")
+                              }, undefined, false, undefined, this)
+                            ]
+                          }, undefined, true, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "grid grid-cols-2 gap-6",
+                            children: [
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                                className: "relative pt-4",
+                                children: [
+                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                                    className: INPUT_CLASS,
+                                    id: "cardExpiry",
+                                    placeholder: "MM/YY",
+                                    type: "text",
+                                    inputMode: "numeric",
+                                    maxLength: 5,
+                                    autoComplete: "cc-exp",
+                                    value: form.cardExpiry,
+                                    onChange: handleCardExpiry,
+                                    onBlur: handleBlur("cardExpiry")
+                                  }, undefined, false, undefined, this),
+                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                                    className: LABEL_CLASS,
+                                    htmlFor: "cardExpiry",
+                                    children: "Expiry (MM/YY)"
+                                  }, undefined, false, undefined, this),
+                                  showError("cardExpiry") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                                    role: "alert",
+                                    className: "mt-1 text-xs text-red-500",
+                                    children: showError("cardExpiry")
+                                  }, undefined, false, undefined, this)
+                                ]
+                              }, undefined, true, undefined, this),
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                                className: "relative pt-4",
+                                children: [
+                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                                    className: INPUT_CLASS,
+                                    id: "cardCvv",
+                                    placeholder: "CVV",
+                                    type: "password",
+                                    inputMode: "numeric",
+                                    maxLength: 4,
+                                    autoComplete: "cc-csc",
+                                    value: form.cardCvv,
+                                    onChange: handleField("cardCvv"),
+                                    onBlur: handleBlur("cardCvv")
+                                  }, undefined, false, undefined, this),
+                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                                    className: LABEL_CLASS,
+                                    htmlFor: "cardCvv",
+                                    children: "CVV"
+                                  }, undefined, false, undefined, this),
+                                  showError("cardCvv") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                                    role: "alert",
+                                    className: "mt-1 text-xs text-red-500",
+                                    children: showError("cardCvv")
+                                  }, undefined, false, undefined, this)
+                                ]
+                              }, undefined, true, undefined, this)
+                            ]
+                          }, undefined, true, undefined, this)
                         ]
                       }, undefined, true, undefined, this)
                     ]
@@ -19797,12 +20026,16 @@ function Checkout() {
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
                         type: "submit",
                         disabled: submitState.status === "loading",
-                        className: "w-full md:w-auto bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold py-4 px-10 rounded-xl hover:opacity-90 transition-opacity text-center disabled:opacity-60 disabled:cursor-not-allowed",
-                        children: submitState.status === "loading" ? "Processing..." : "Pay now"
+                        className: `w-full md:w-auto font-headline font-bold py-4 px-10 rounded-xl transition-all text-center ${canSubmit && submitState.status !== "loading" ? "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:opacity-90 cursor-pointer" : "bg-surface-container-highest text-on-surface-variant opacity-50 cursor-not-allowed"}`,
+                        children: submitState.status === "loading" ? "Processing…" : "Pay now"
                       }, undefined, false, undefined, this),
                       submitState.status === "error" && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
                         className: "text-sm text-red-600 font-body",
                         children: submitState.message
+                      }, undefined, false, undefined, this),
+                      submitAttempted && !canSubmit && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                        className: "text-sm text-red-500 font-body",
+                        children: !shippingSelected && Object.keys(formErrors).length === 0 ? "Please select a shipping method." : "Please complete all required fields."
                       }, undefined, false, undefined, this)
                     ]
                   }, undefined, true, undefined, this)
@@ -19898,16 +20131,16 @@ function Checkout() {
                   className: "flex gap-3",
                   children: [
                     /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "relative flex-grow",
+                      className: "relative flex-grow pt-4",
                       children: [
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                          className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
+                          className: INPUT_CLASS,
                           id: "discount",
                           placeholder: "Discount code",
                           type: "text"
                         }, undefined, false, undefined, this),
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                          className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
+                          className: LABEL_CLASS,
                           htmlFor: "discount",
                           children: "Discount code"
                         }, undefined, false, undefined, this)
@@ -19935,7 +20168,7 @@ function Checkout() {
                         }, undefined, false, undefined, this)
                       ]
                     }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    shippingSelected && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                       className: "flex justify-between items-center font-body text-sm text-on-surface-variant",
                       children: [
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
@@ -19943,8 +20176,11 @@ function Checkout() {
                         }, undefined, false, undefined, this),
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                           className: "font-label text-on-surface",
-                          children: shippingTotal !== null ? `${symbol}${shippingTotal.toFixed(2)}` : "Calculated at next step"
-                        }, undefined, false, undefined, this)
+                          children: [
+                            symbol,
+                            SHIPPING_COST.toFixed(2)
+                          ]
+                        }, undefined, true, undefined, this)
                       ]
                     }, undefined, true, undefined, this)
                   ]

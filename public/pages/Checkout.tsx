@@ -297,7 +297,7 @@ export default function Checkout() {
                 />
                 <label className={LABEL_CLASS} htmlFor="email">Email Address</label>
                 {showError('email') && (
-                  <p className="mt-1 text-xs text-red-500">{showError('email')}</p>
+                  <p role="alert" className="mt-1 text-xs text-red-500">{showError('email')}</p>
                 )}
               </div>
               <div className="flex items-center gap-3">
@@ -331,7 +331,7 @@ export default function Checkout() {
                   <option value="AU">Australia</option>
                   <option value="US">United States</option>
                   <option value="CA">Canada</option>
-                  <option value="UK">United Kingdom</option>
+                  <option value="GB">United Kingdom</option>
                 </select>
                 <span className="material-symbols-outlined absolute right-0 bottom-3 text-outline pointer-events-none" data-icon="expand_more">expand_more</span>
               </div>
@@ -375,7 +375,7 @@ export default function Checkout() {
                 />
                 <label className={LABEL_CLASS} htmlFor="address">Address Line 1</label>
                 {showError('address') && (
-                  <p className="mt-1 text-xs text-red-500">{showError('address')}</p>
+                  <p role="alert" className="mt-1 text-xs text-red-500">{showError('address')}</p>
                 )}
               </div>
 
@@ -404,7 +404,7 @@ export default function Checkout() {
                   />
                   <label className={LABEL_CLASS} htmlFor="city">City</label>
                   {showError('city') && (
-                    <p className="mt-1 text-xs text-red-500">{showError('city')}</p>
+                    <p role="alert" className="mt-1 text-xs text-red-500">{showError('city')}</p>
                   )}
                 </div>
                 <div className="relative pt-4">
@@ -430,7 +430,7 @@ export default function Checkout() {
                   />
                   <label className={LABEL_CLASS} htmlFor="zip">Postcode</label>
                   {showError('zip') && (
-                    <p className="mt-1 text-xs text-red-500">{showError('zip')}</p>
+                    <p role="alert" className="mt-1 text-xs text-red-500">{showError('zip')}</p>
                   )}
                 </div>
               </div>
@@ -496,13 +496,14 @@ export default function Checkout() {
                     type="text"
                     inputMode="numeric"
                     maxLength={19}
+                    autoComplete="cc-number"
                     value={form.cardNumber}
                     onChange={handleCardNumber}
                     onBlur={handleBlur('cardNumber')}
                   />
                   <label className={LABEL_CLASS} htmlFor="cardNumber">Card number</label>
                   {showError('cardNumber') && (
-                    <p className="mt-1 text-xs text-red-500">{showError('cardNumber')}</p>
+                    <p role="alert" className="mt-1 text-xs text-red-500">{showError('cardNumber')}</p>
                   )}
                 </div>
 
@@ -512,13 +513,14 @@ export default function Checkout() {
                     id="cardName"
                     placeholder="Cardholder name"
                     type="text"
+                    autoComplete="cc-name"
                     value={form.cardName}
                     onChange={handleField('cardName')}
                     onBlur={handleBlur('cardName')}
                   />
                   <label className={LABEL_CLASS} htmlFor="cardName">Cardholder name</label>
                   {showError('cardName') && (
-                    <p className="mt-1 text-xs text-red-500">{showError('cardName')}</p>
+                    <p role="alert" className="mt-1 text-xs text-red-500">{showError('cardName')}</p>
                   )}
                 </div>
 
@@ -531,13 +533,14 @@ export default function Checkout() {
                       type="text"
                       inputMode="numeric"
                       maxLength={5}
+                      autoComplete="cc-exp"
                       value={form.cardExpiry}
                       onChange={handleCardExpiry}
                       onBlur={handleBlur('cardExpiry')}
                     />
                     <label className={LABEL_CLASS} htmlFor="cardExpiry">Expiry (MM/YY)</label>
                     {showError('cardExpiry') && (
-                      <p className="mt-1 text-xs text-red-500">{showError('cardExpiry')}</p>
+                      <p role="alert" className="mt-1 text-xs text-red-500">{showError('cardExpiry')}</p>
                     )}
                   </div>
                   <div className="relative pt-4">
@@ -548,13 +551,14 @@ export default function Checkout() {
                       type="password"
                       inputMode="numeric"
                       maxLength={4}
+                      autoComplete="cc-csc"
                       value={form.cardCvv}
                       onChange={handleField('cardCvv')}
                       onBlur={handleBlur('cardCvv')}
                     />
                     <label className={LABEL_CLASS} htmlFor="cardCvv">CVV</label>
                     {showError('cardCvv') && (
-                      <p className="mt-1 text-xs text-red-500">{showError('cardCvv')}</p>
+                      <p role="alert" className="mt-1 text-xs text-red-500">{showError('cardCvv')}</p>
                     )}
                   </div>
                 </div>

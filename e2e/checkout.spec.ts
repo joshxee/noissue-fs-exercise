@@ -2,41 +2,42 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Checkout flow', () => {
   test('should allow a user to fill out the form and place an order', async ({ page }) => {
-    // Navigate to the checkout page
     await page.goto('/');
 
-    // Assert we are on the checkout page by checking a heading
     await expect(page.getByRole('heading', { name: 'Contact Information' })).toBeVisible();
 
-    // Fill in Contact Information
+    // Contact information
     await page.locator('#email').fill('test@example.com');
-    
-    // Check newsletter
     await page.locator('#newsletter').check();
 
-    // Fill in Delivery Information
-    await page.locator('#country').selectOption('US');
+    // Delivery — fill address fields to unlock shipping section
+    await page.locator('#country').selectOption('NZ');
     await page.locator('#firstName').fill('Jane');
     await page.locator('#lastName').fill('Doe');
     await page.locator('#address').fill('123 Eco Way');
     await page.locator('#apartment').fill('Suite 100');
-    await page.locator('#city').fill('Portland');
-    await page.locator('#state').selectOption('CA');
-    await page.locator('#zip').fill('90210');
+    await page.locator('#city').fill('Auckland');
+    await page.locator('#state').fill('Auckland');
+    await page.locator('#zip').fill('1010');
 
-    // Select PayPal payment method (Credit card is default)
-    await page.getByLabel('PayPal').check();
+    // Shipping — revealed once address is complete
+    await expect(page.getByText('Standard Shipping')).toBeVisible();
+    await page.locator('input[name="shipping"]').check();
 
-    // Click "Pay now" button (submits checkout form to backend)
-    await page.getByRole('button', { name: 'Pay now' }).click();
+    // Payment — credit card fields (4242... passes Luhn)
+    await page.locator('#cardNumber').fill('4242 4242 4242 4242');
+    await page.locator('#cardName').fill('Jane Doe');
+    await page.locator('#cardExpiry').fill('12/27');
+    await page.locator('#cardCvv').fill('123');
 
-    // Wait for navigation and assert we are on the confirmation page
+    // Pay now should be enabled once all fields are valid
+    const payBtn = page.getByRole('button', { name: 'Pay now' });
+    await expect(payBtn).not.toBeDisabled();
+    await payBtn.click();
+
+    // Confirm navigation to order confirmation page
     await expect(page).toHaveURL(/\/confirmation/);
-
-    // Assert the confirmation text is visible
     await expect(page.getByRole('heading', { name: 'Order Confirmed.' })).toBeVisible();
-
-    // Assert a dynamic order reference is visible
     await expect(page.getByText(/#NI-\d+-ECO/)).toBeVisible();
   });
 });

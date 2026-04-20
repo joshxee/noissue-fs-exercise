@@ -7,6 +7,7 @@
   :root, :host {
     --font-sans: ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    --color-red-500: oklch(63.7% .237 25.331);
     --color-red-600: oklch(57.7% .245 27.325);
     --color-green-600: oklch(62.7% .194 149.214);
     --color-green-700: oklch(52.7% .154 150.069);
@@ -351,6 +352,10 @@
     top: calc(var(--spacing) * -2);
   }
 
+  .-top-4 {
+    top: calc(var(--spacing) * -4);
+  }
+
   .top-0 {
     top: calc(var(--spacing) * 0);
   }
@@ -377,6 +382,10 @@
 
   .right-2 {
     right: calc(var(--spacing) * 2);
+  }
+
+  .bottom-3 {
+    bottom: calc(var(--spacing) * 3);
   }
 
   .left-0 {
@@ -537,6 +546,10 @@
 
   .ms-4 {
     margin-inline-start: calc(var(--spacing) * 4);
+  }
+
+  .mt-0\.5 {
+    margin-top: calc(var(--spacing) * .5);
   }
 
   .mt-1 {
@@ -975,6 +988,10 @@
     cursor: default;
   }
 
+  .cursor-not-allowed {
+    cursor: not-allowed;
+  }
+
   .cursor-pointer {
     cursor: pointer;
   }
@@ -1001,6 +1018,10 @@
 
   .grid-cols-2 {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .grid-cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .flex-col {
@@ -1137,6 +1158,14 @@
     align-self:  flex-end;
   }
 
+  .justify-self-center {
+    justify-self: center;
+  }
+
+  .justify-self-end {
+    justify-self: flex-end;
+  }
+
   .truncate {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -1264,6 +1293,10 @@
     }
   }
 
+  .border-primary {
+    border-color: var(--color-primary);
+  }
+
   .bg-\[\#e5e2e1\] {
     background-color: #e5e2e1;
   }
@@ -1312,6 +1345,16 @@
 
   .bg-primary-container {
     background-color: var(--color-primary-container);
+  }
+
+  .bg-primary\/5 {
+    background-color: #02251f0d;
+  }
+
+  @supports (color: color-mix(in lab, red, red)) {
+    .bg-primary\/5 {
+      background-color: color-mix(in oklab, var(--color-primary) 5%, transparent);
+    }
   }
 
   .bg-primary\/30 {
@@ -1800,6 +1843,10 @@
     color: var(--color-destructive-foreground);
   }
 
+  .text-error {
+    color: var(--color-error);
+  }
+
   .text-muted-foreground {
     color: var(--color-muted-foreground);
   }
@@ -1854,6 +1901,10 @@
 
   .text-purple-300 {
     color: var(--color-purple-300);
+  }
+
+  .text-red-500 {
+    color: var(--color-red-500);
   }
 
   .text-red-600 {
