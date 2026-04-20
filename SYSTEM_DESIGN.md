@@ -16,7 +16,8 @@ A full-stack ecommerce checkout flow that reads a static cart fixture, lets a us
 | Database | SQLite (in-memory) |
 | Frontend | React 19, React Router v7 |
 | Styling | Tailwind CSS v4 |
-| Testing | Playwright (e2e) |
+| Testing | Bun test (unit/integration), Playwright (e2e) |
+| Config | `PORT` env var (default `3000`) |
 
 ---
 
@@ -39,10 +40,14 @@ A full-stack ecommerce checkout flow that reads a static cart fixture, lets a us
 │                Elysia Server (:3000)                │
 │                                                     │
 │  GET  /api/cart      ──▶ cartRoute                  │
+│  POST /api/cart/random ──▶ cartRoute                │
 │  POST /api/checkout  ──▶ checkoutRoute              │
 │  GET  /dist/*        ──▶ static file plugin         │
 │  GET  /*             ──▶ index.html (SPA fallback)  │
 │                                                     │
+│  lifecycle: onAfterHandle logs {ts,method,path,     │
+│             status,durationMs} for /api/* requests  │
+│  lifecycle: onError logs {ts,method,path,error}     │
 │  startup: seedDatabase() reads cart.json → SQLite   │
 └─────────────────────────────────────────────────────┘
           │
@@ -206,10 +211,40 @@ Processes the checkout: groups cart items by supplier, creates one purchase orde
    - Insert rows into `purchase_order_items`
 4. Return enriched PO objects (with `supplierName`, `productName`, `productType` joined from lookup maps)
 
-**Error response**
+**Error responses**
+
+409 — cart empty or already checked out:
 ```json
-{ "success": false, "error": "Failed to process checkout" }
+{ "success": false, "error": { "code": "CART_EMPTY_OR_CHECKED_OUT", "message": "Cart is empty or has already been checked out" } }
 ```
+
+500 — unexpected server error (internal detail never exposed to client):
+```json
+{ "success": false, "error": { "code": "INTERNAL_ERROR", "message": "Internal server error" } }
+```
+
+All error responses follow the envelope `{ success: false, error: { code: string, message: string } }`. HTTP status codes are set explicitly: `409` for business-rule conflicts, `500` for unexpected failures.
+
+On success, a structured log event is emitted:
+```json
+{ "event": "checkout.complete", "poCount": 4, "grandTotal": 1884, "supplierIds": ["1","2","3","4"] }
+```
+
+---
+
+## Frontend Architecture
+
+The checkout page is decomposed into focused modules under `public/pages/checkout/`:
+
+| File | Responsibility |
+|---|---|
+| `Checkout.tsx` | Layout shell — composes form + summary, derives display values |
+| `CheckoutForm.tsx` | Left column — Contact, Delivery, Shipping, Payment sections |
+| `OrderSummary.tsx` | Right column — product list, discount input, totals |
+| `useCart.ts` | Fetches `GET /api/cart`, returns typed `CartState` union |
+| `useCheckoutForm.ts` | Form state, validation (Luhn, expiry), all handlers, submit logic |
+
+`public/pages/Checkout.tsx` is a one-line re-export shim so `public/index.tsx` imports are unchanged.
 
 ---
 
@@ -217,8 +252,9 @@ Processes the checkout: groups cart items by supplier, creates one purchase orde
 
 ```
 Checkout page mounts
-  → GET /api/cart
+  → useCart hook: GET /api/cart
   → renders 6 real products across 4 suppliers in Order Archive sidebar
+  → shows "Your cart is empty." when suppliers array is empty
   → shows NZD subtotal only (shipping hidden until user selects method)
 
 Step 1 — Contact: user enters email (required, validated on blur)
@@ -308,9 +344,20 @@ The Pay Now button only becomes active when all of the above pass simultaneously
 
 ---
 
+## Test Coverage
+
+| Layer | Runner | Count | What is tested |
+|---|---|---|---|
+| Service | Bun test | 7 | `processCheckout` logic, `seedRandomCart` |
+| Route | Bun test | 8 | HTTP status codes, response shapes, 409 on empty/duplicate cart |
+| Cart route | Bun test | 7 | `GET /api/cart` grouping, `POST /api/cart/random` |
+| E2E | Playwright | 5 | Happy path, empty cart state, form validation errors, 409 duplicate submission, mobile 375 px no-overflow |
+
+---
+
 ## Known Limitations (exercise scope)
 
-- **No idempotency on checkout** — calling `POST /api/checkout` twice creates duplicate purchase orders. The submit button is disabled client-side during the in-flight request but there is no server-side guard.
+- **Partial idempotency on checkout** — `processCheckout` deletes cart items after a successful run, so a duplicate submission while the cart is empty returns `409 CART_EMPTY_OR_CHECKED_OUT`. However, if the cart is repopulated (e.g. via `POST /api/cart/random`) before a second submission, new purchase orders are created. A production system would use an explicit idempotency key.
 - **State lost on refresh** — the confirmation page redirects to `/` if `location.state` is absent. A production implementation would persist orders by ID and expose `GET /api/orders/:id`.
 - **Single global cart** — there is no user session concept; the cart is fixed at server startup.
 - **Mock payment only** — credit card fields are validated client-side (Luhn, expiry, CVV format) but no payment gateway integration exists. Card data is never transmitted to the backend.

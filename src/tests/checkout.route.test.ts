@@ -75,9 +75,10 @@ describe('Checkout Route', () => {
         new Request('http://localhost/api/checkout', { method: 'POST' }),
       );
       expect(res.status).toBe(409);
-      const body = await res.json() as { success: boolean; error: string };
+      const body = await res.json() as { success: boolean; error: { code: string; message: string } };
       expect(body.success).toBe(false);
-      expect(typeof body.error).toBe('string');
+      expect(typeof body.error.message).toBe('string');
+      expect(typeof body.error.code).toBe('string');
     });
 
     it('returns 409 on duplicate checkout (idempotency)', async () => {

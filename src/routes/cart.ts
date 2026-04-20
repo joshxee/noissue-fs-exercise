@@ -24,7 +24,7 @@ type SupplierGroup = {
 };
 
 export const cartRoute = new Elysia({ prefix: '/api' })
-  .get('/cart', () => {
+  .get('/cart', ({ set }) => {
     try {
       const allCartItems = db.select().from(cartItems).all();
       const allProducts = db.select().from(products).all();
@@ -80,14 +80,16 @@ export const cartRoute = new Elysia({ prefix: '/api' })
         data: { suppliers: supplierGroups, grandTotal, shippingTotal, currency, symbol },
       };
     } catch {
-      return { success: false, error: 'Failed to load cart' };
+      set.status = 500;
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } };
     }
   })
-  .post('/cart/random', () => {
+  .post('/cart/random', ({ set }) => {
     try {
       seedRandomCart();
       return { success: true };
     } catch {
-      return { success: false, error: 'Failed to generate random cart' };
+      set.status = 500;
+      return { success: false, error: { code: 'INTERNAL_ERROR', message: 'Internal server error' } };
     }
   });

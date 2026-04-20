@@ -31,9 +31,11 @@ export type CartResponse = {
   data: CartData;
 };
 
+export type ApiError = { code: string; message: string };
+
 export type CartErrorResponse = {
   success: false;
-  error: string;
+  error: ApiError;
 };
 
 export type PurchaseOrderItem = {
@@ -68,7 +70,7 @@ export type CheckoutResponse = {
 
 export type CheckoutErrorResponse = {
   success: false;
-  error: string;
+  error: ApiError;
 };
 
 export type ShippingAddress = {
