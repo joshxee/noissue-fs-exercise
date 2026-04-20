@@ -3,29 +3,15 @@ var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
-function __accessProp(key) {
-  return this[key];
-}
-var __toESMCache_node;
-var __toESMCache_esm;
 var __toESM = (mod, isNodeMode, target) => {
-  var canCache = mod != null && typeof mod === "object";
-  if (canCache) {
-    var cache = isNodeMode ? __toESMCache_node ??= new WeakMap : __toESMCache_esm ??= new WeakMap;
-    var cached = cache.get(mod);
-    if (cached)
-      return cached;
-  }
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: __accessProp.bind(mod, key),
+        get: () => mod[key],
         enumerable: true
       });
-  if (canCache)
-    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
@@ -287,7 +273,7 @@ var require_scheduler_development = __commonJS((exports) => {
 
 // node_modules/scheduler/index.js
 var require_scheduler = __commonJS((exports, module) => {
-  var scheduler_development = __toESM(require_scheduler_development());
+  var scheduler_development = __toESM(require_scheduler_development(), 1);
   if (false) {} else {
     module.exports = scheduler_development;
   }
@@ -1118,7 +1104,7 @@ See https://react.dev/link/invalid-hook-call for tips about how to debug and fix
 
 // node_modules/react/index.js
 var require_react = __commonJS((exports, module) => {
-  var react_development = __toESM(require_react_development());
+  var react_development = __toESM(require_react_development(), 1);
   if (false) {} else {
     module.exports = react_development;
   }
@@ -1126,7 +1112,7 @@ var require_react = __commonJS((exports, module) => {
 
 // node_modules/react-dom/cjs/react-dom.development.js
 var require_react_dom_development = __commonJS((exports) => {
-  var React = __toESM(require_react());
+  var React = __toESM(require_react(), 1);
   (function() {
     function noop() {}
     function testStringCoercion(value) {
@@ -1309,7 +1295,7 @@ See https://react.dev/link/invalid-hook-call for tips about how to debug and fix
 
 // node_modules/react-dom/index.js
 var require_react_dom = __commonJS((exports, module) => {
-  var react_dom_development = __toESM(require_react_dom_development());
+  var react_dom_development = __toESM(require_react_dom_development(), 1);
   if (false) {} else {
     module.exports = react_dom_development;
   }
@@ -1317,9 +1303,9 @@ var require_react_dom = __commonJS((exports, module) => {
 
 // node_modules/react-dom/cjs/react-dom-client.development.js
 var require_react_dom_client_development = __commonJS((exports) => {
-  var Scheduler = __toESM(require_scheduler());
-  var React = __toESM(require_react());
-  var ReactDOM = __toESM(require_react_dom());
+  var Scheduler = __toESM(require_scheduler(), 1);
+  var React = __toESM(require_react(), 1);
+  var ReactDOM = __toESM(require_react_dom(), 1);
   (function() {
     function findHook(fiber, id) {
       for (fiber = fiber.memoizedState;fiber !== null && 0 < id; )
@@ -16885,7 +16871,7 @@ You might need to use a local HTTP server (instead of file://): https://react.de
 
 // node_modules/react-dom/client.js
 var require_client = __commonJS((exports, module) => {
-  var react_dom_client_development = __toESM(require_react_dom_client_development());
+  var react_dom_client_development = __toESM(require_react_dom_client_development(), 1);
   if (false) {} else {
     module.exports = react_dom_client_development;
   }
@@ -16893,7 +16879,7 @@ var require_client = __commonJS((exports, module) => {
 
 // node_modules/react/cjs/react-jsx-dev-runtime.development.js
 var require_react_jsx_dev_runtime_development = __commonJS((exports) => {
-  var React12 = __toESM(require_react());
+  var React12 = __toESM(require_react(), 1);
   (function() {
     function getComponentNameFromType(type) {
       if (type == null)
@@ -17108,7 +17094,7 @@ React keys must be passed directly to JSX without using spread:
 
 // node_modules/react/jsx-dev-runtime.js
 var require_jsx_dev_runtime = __commonJS((exports, module) => {
-  var react_jsx_dev_runtime_development = __toESM(require_react_jsx_dev_runtime_development());
+  var react_jsx_dev_runtime_development = __toESM(require_react_jsx_dev_runtime_development(), 1);
   if (false) {} else {
     module.exports = react_jsx_dev_runtime_development;
   }
@@ -18194,6 +18180,25 @@ function DataRoutes({
   onError
 }) {
   return useRoutesImpl(routes, undefined, { state, isStatic, onError, future });
+}
+function Navigate({
+  to,
+  replace: replace2,
+  state,
+  relative
+}) {
+  invariant(useInRouterContext(), `<Navigate> may be used only in the context of a <Router> component.`);
+  let { static: isStatic } = React3.useContext(NavigationContext);
+  warning(!isStatic, `<Navigate> must not be used on the initial render in a <StaticRouter>. This is a no-op, but you should modify your code so the <Navigate> is only ever rendered in response to some user interaction or state change.`);
+  let { matches } = React3.useContext(RouteContext);
+  let { pathname: locationPathname } = useLocation();
+  let navigate = useNavigate();
+  let path = resolveTo(to, getResolveToMatches(matches), locationPathname, relative === "path");
+  let jsonPath = JSON.stringify(path);
+  React3.useEffect(() => {
+    navigate(JSON.parse(jsonPath), { replace: replace2, state, relative });
+  }, [navigate, jsonPath, relative, replace2, state]);
+  return null;
 }
 function Route(props) {
   invariant(false, `A <Route> is only ever to be used as the child of <Routes> element, never rendered directly. Please wrap your <Route> in a <Routes>.`);
@@ -19299,8 +19304,69 @@ function useViewTransitionState(to, { relative } = {}) {
 "use client";
 
 // public/pages/Checkout.tsx
+var import_react = __toESM(require_react(), 1);
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
+var INITIAL_FORM = {
+  email: "",
+  newsletter: false,
+  country: "US",
+  firstName: "",
+  lastName: "",
+  address: "",
+  apartment: "",
+  city: "",
+  state: "",
+  zip: "",
+  paymentMethod: "credit_card"
+};
 function Checkout() {
+  const navigate = useNavigate();
+  const [cartState, setCartState] = import_react.default.useState({ status: "idle" });
+  const [submitState, setSubmitState] = import_react.default.useState({ status: "idle" });
+  const [form, setForm] = import_react.default.useState(INITIAL_FORM);
+  import_react.default.useEffect(() => {
+    setCartState({ status: "loading" });
+    fetch("/api/cart").then((res) => res.json()).then((json) => {
+      if (json.success) {
+        setCartState({ status: "success", data: json.data });
+      } else {
+        setCartState({ status: "error", message: json.error });
+      }
+    }).catch(() => setCartState({ status: "error", message: "Unable to load cart" }));
+  }, []);
+  const handleField = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value }));
+  const handleCheckbox = (field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.checked }));
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setSubmitState({ status: "loading" });
+    fetch("/api/checkout", { method: "POST" }).then((res) => res.json()).then((json) => {
+      if (json.success) {
+        const shippingAddress = {
+          email: form.email,
+          firstName: form.firstName,
+          lastName: form.lastName,
+          address: form.address,
+          apartment: form.apartment,
+          city: form.city,
+          state: form.state,
+          zip: form.zip,
+          country: form.country
+        };
+        const state = {
+          purchaseOrders: json.data.purchaseOrders,
+          shippingAddress
+        };
+        navigate("/confirmation", { state });
+      } else {
+        setSubmitState({ status: "error", message: json.error });
+      }
+    }).catch(() => setSubmitState({ status: "error", message: "Checkout failed. Please try again." }));
+  };
+  const subtotal = cartState.status === "success" ? cartState.data.grandTotal : null;
+  const shippingTotal = cartState.status === "success" ? cartState.data.shippingTotal : null;
+  const total = subtotal !== null && shippingTotal !== null ? subtotal + shippingTotal : null;
+  const symbol = cartState.status === "success" ? cartState.data.symbol : "$";
+  const currency = cartState.status === "success" ? cartState.data.currency : "NZD";
   return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
     className: "bg-background text-on-background font-body antialiased min-h-screen flex flex-col",
     children: [
@@ -19339,6 +19405,7 @@ function Checkout() {
                 className: "flex gap-4 items-center",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                    type: "button",
                     className: "text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200",
                     children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                       className: "material-symbols-outlined",
@@ -19347,6 +19414,7 @@ function Checkout() {
                     }, undefined, false, undefined, this)
                   }, undefined, false, undefined, this),
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                    type: "button",
                     className: "text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200",
                     children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                       className: "material-symbols-outlined",
@@ -19366,8 +19434,9 @@ function Checkout() {
       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("main", {
         className: "flex-grow w-full max-w-7xl mx-auto px-6 py-12 md:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 relative",
         children: [
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("form", {
             className: "lg:col-span-7 space-y-16",
+            onSubmit: handleSubmit,
             children: [
               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
                 className: "bg-surface-container-low p-8 rounded-xl transition-all duration-300",
@@ -19386,7 +19455,9 @@ function Checkout() {
                             className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
                             id: "email",
                             placeholder: "Email Address",
-                            type: "email"
+                            type: "email",
+                            value: form.email,
+                            onChange: handleField("email")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                             className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
@@ -19401,7 +19472,9 @@ function Checkout() {
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
                             className: "rounded-DEFAULT border-outline-variant/50 text-primary focus:ring-primary bg-transparent w-4 h-4",
                             id: "newsletter",
-                            type: "checkbox"
+                            type: "checkbox",
+                            checked: form.newsletter,
+                            onChange: handleCheckbox("newsletter")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                             className: "font-body text-sm text-on-surface-variant",
@@ -19430,7 +19503,8 @@ function Checkout() {
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("select", {
                             className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body",
                             id: "country",
-                            defaultValue: "US",
+                            value: form.country,
+                            onChange: handleField("country"),
                             children: [
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
                                 value: "US",
@@ -19467,7 +19541,9 @@ function Checkout() {
                                 className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
                                 id: "firstName",
                                 placeholder: "First Name",
-                                type: "text"
+                                type: "text",
+                                value: form.firstName,
+                                onChange: handleField("firstName")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                                 className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
@@ -19483,7 +19559,9 @@ function Checkout() {
                                 className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
                                 id: "lastName",
                                 placeholder: "Last Name",
-                                type: "text"
+                                type: "text",
+                                value: form.lastName,
+                                onChange: handleField("lastName")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                                 className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
@@ -19501,7 +19579,9 @@ function Checkout() {
                             className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
                             id: "address",
                             placeholder: "Address",
-                            type: "text"
+                            type: "text",
+                            value: form.address,
+                            onChange: handleField("address")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                             className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
@@ -19517,7 +19597,9 @@ function Checkout() {
                             className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
                             id: "apartment",
                             placeholder: "Apartment, suite, etc. (optional)",
-                            type: "text"
+                            type: "text",
+                            value: form.apartment,
+                            onChange: handleField("apartment")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                             className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
@@ -19536,7 +19618,9 @@ function Checkout() {
                                 className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
                                 id: "city",
                                 placeholder: "City",
-                                type: "text"
+                                type: "text",
+                                value: form.city,
+                                onChange: handleField("city")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                                 className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
@@ -19551,7 +19635,8 @@ function Checkout() {
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("select", {
                                 className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body text-outline",
                                 id: "state",
-                                defaultValue: "",
+                                value: form.state,
+                                onChange: handleField("state"),
                                 children: [
                                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
                                     disabled: true,
@@ -19586,7 +19671,9 @@ function Checkout() {
                                 className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent",
                                 id: "zip",
                                 placeholder: "ZIP code",
-                                type: "text"
+                                type: "text",
+                                value: form.zip,
+                                onChange: handleField("zip")
                               }, undefined, false, undefined, this),
                               /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
                                 className: "absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base",
@@ -19639,11 +19726,12 @@ function Checkout() {
                         className: "flex items-center gap-4 p-4 border border-outline-variant/20 rounded-lg cursor-pointer bg-surface transition-colors hover:bg-surface-container-highest",
                         children: [
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            defaultChecked: true,
                             className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
                             name: "payment",
                             type: "radio",
-                            value: "credit_card"
+                            value: "credit_card",
+                            checked: form.paymentMethod === "credit_card",
+                            onChange: handleField("paymentMethod")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                             className: "flex-grow font-body text-on-surface font-medium",
@@ -19666,7 +19754,9 @@ function Checkout() {
                             className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
                             name: "payment",
                             type: "radio",
-                            value: "paypal"
+                            value: "paypal",
+                            checked: form.paymentMethod === "paypal",
+                            onChange: handleField("paymentMethod")
                           }, undefined, false, undefined, this),
                           /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                             className: "flex-grow font-body text-on-surface font-medium",
@@ -19682,6 +19772,7 @@ function Checkout() {
                 className: "flex flex-col-reverse md:flex-row justify-between items-center gap-6 pt-8",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                    type: "button",
                     className: "font-headline font-semibold text-tertiary flex items-center gap-2 hover:text-tertiary-container transition-colors",
                     children: [
                       /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
@@ -19692,11 +19783,21 @@ function Checkout() {
                       "Return to cart"
                     ]
                   }, undefined, true, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV(Link, {
-                    to: "/confirmation",
-                    className: "w-full md:w-auto bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold py-4 px-10 rounded-xl hover:opacity-90 transition-opacity text-center",
-                    children: "Pay now"
-                  }, undefined, false, undefined, this)
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "flex flex-col items-end gap-2 w-full md:w-auto",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                        type: "submit",
+                        disabled: submitState.status === "loading",
+                        className: "w-full md:w-auto bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold py-4 px-10 rounded-xl hover:opacity-90 transition-opacity text-center disabled:opacity-60 disabled:cursor-not-allowed",
+                        children: submitState.status === "loading" ? "Processing..." : "Pay now"
+                      }, undefined, false, undefined, this),
+                      submitState.status === "error" && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                        className: "text-sm text-red-600 font-body",
+                        children: submitState.message
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this)
                 ]
               }, undefined, true, undefined, this)
             ]
@@ -19712,129 +19813,79 @@ function Checkout() {
                 }, undefined, false, undefined, this),
                 /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                   className: "space-y-6",
-                  children: [
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "flex gap-4 items-start",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                          className: "relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("img", {
-                              alt: "Custom Compostable Mailer",
-                              className: "w-full h-full object-cover mix-blend-multiply",
-                              src: "https://lh3.googleusercontent.com/aida-public/AB6AXuD-W9ARCmSrqSfNC4hbtOo865s1nFEiNJ00pCDETUkNMjjQbRTFgAmzSbKenXtH8ErO6CB_-wzL8Dd8VPD6r4bxSxuK5F1YRQeh1KJkVhQYV_rirprCP19wNmyamLJiZiD4a3ZhJGCtByvGFWYj8lOfPK4DoztL1BY7JvD-J0Bbsxm7pUbC19z29oIMbx-_ET-MdWdV7y_fdhYm96Jn0k7NWxtQEmuXFuOLRmd4n9Qjg155hK5QTh0d8S2McLFcQ4cS1JlEzA05z_s"
-                            }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                              className: "absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full",
-                              children: "1"
-                            }, undefined, false, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                          className: "flex-grow flex flex-col justify-between h-20 py-1",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                              children: [
-                                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h4", {
-                                  className: "font-body font-medium text-on-surface line-clamp-2",
-                                  children: "Custom Compostable Mailers"
-                                }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                  className: "font-label text-xs text-on-surface-variant mt-1",
-                                  children: '260 x 385mm / 10.2 x 15"'
-                                }, undefined, false, undefined, this)
-                              ]
-                            }, undefined, true, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                              className: "font-label text-sm text-on-surface font-medium",
-                              children: "$120.00"
-                            }, undefined, false, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "flex gap-4 items-start",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                          className: "relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("img", {
-                              alt: "Recycled Tissue Paper",
-                              className: "w-full h-full object-cover mix-blend-multiply",
-                              src: "https://lh3.googleusercontent.com/aida-public/AB6AXuB-2yqydMppvXMLbixl3KMnRQRMmYUsGw-FgWAe3VgL-2VwUdSTPkRulOGn_vcntNvtbOdqgSU9FToR3d3aBnjjWvUeuZz19CYmijeZZfrnikFygb92j0cFTlQgffFmz7NgBfw_goNQHE9fFF6fgGOZPYBfYe79Ez_IUk7ulcH9anthYX2fOj7BWlb44CzO7JtBYpNJCnYtZ5OzRCfOj2lDPlwEhSpCk6qlH6W7_TtZ_oiu_TXCx4ssI_VJuRYSwLqdSROaAKh4tVI"
-                            }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                              className: "absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full",
-                              children: "2"
-                            }, undefined, false, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                          className: "flex-grow flex flex-col justify-between h-20 py-1",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                              children: [
-                                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h4", {
-                                  className: "font-body font-medium text-on-surface line-clamp-2",
-                                  children: "Recycled Tissue Paper"
-                                }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                  className: "font-label text-xs text-on-surface-variant mt-1",
-                                  children: "1 Color / 380 x 500mm"
-                                }, undefined, false, undefined, this)
-                              ]
-                            }, undefined, true, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                              className: "font-label text-sm text-on-surface font-medium",
-                              children: "$85.00"
-                            }, undefined, false, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "flex gap-4 items-start",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                          className: "relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("img", {
-                              alt: "Eco-friendly Stickers",
-                              className: "w-full h-full object-cover mix-blend-multiply",
-                              src: "https://lh3.googleusercontent.com/aida-public/AB6AXuCTUsQKaPzYiRzn_weK2nZOvu4aAkrp_8ZWJB9gsaWq2mYoyDVU7S2fQvWP9YlpH1N0j4KnEDLRBUstBlorG7U3Tz6p5clGAa2Y8u7sEFk6tcxyewPPWQ6y2krpdmI9VRBzpgkp-NYRWuXREANqmEjL-ptr-8yUQV4yjjEJsP2GPqtJtuOzaJCVfQnYB5SMW3mE54nYmPthaC9mdcN1loJDTY6dDf7RRe91muqjOpQfr_nYbdyvXisD3befsp2DFv_QM4YgpNv3NZk"
-                            }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                              className: "absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full",
-                              children: "5"
-                            }, undefined, false, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                          className: "flex-grow flex flex-col justify-between h-20 py-1",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                              children: [
-                                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h4", {
-                                  className: "font-body font-medium text-on-surface line-clamp-2",
-                                  children: "Eco-friendly Stickers"
-                                }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                  className: "font-label text-xs text-on-surface-variant mt-1",
-                                  children: "Circle / 50 x 50mm"
-                                }, undefined, false, undefined, this)
-                              ]
-                            }, undefined, true, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                              className: "font-label text-sm text-on-surface font-medium",
-                              children: "$45.00"
-                            }, undefined, false, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this)
-                  ]
-                }, undefined, true, undefined, this),
+                  children: cartState.status === "idle" || cartState.status === "loading" ? [1, 2, 3].map((i) => /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "flex gap-4 items-start animate-pulse",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "flex-grow space-y-2 py-2",
+                        children: [
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "h-4 bg-surface-container rounded w-3/4"
+                          }, undefined, false, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "h-3 bg-surface-container rounded w-1/2"
+                          }, undefined, false, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "h-3 bg-surface-container rounded w-1/4 mt-2"
+                          }, undefined, false, undefined, this)
+                        ]
+                      }, undefined, true, undefined, this)
+                    ]
+                  }, i, true, undefined, this)) : cartState.status === "error" ? /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                        className: "material-symbols-outlined text-outline",
+                        children: "error"
+                      }, undefined, false, undefined, this),
+                      cartState.message
+                    ]
+                  }, undefined, true, undefined, this) : cartState.data.suppliers.flatMap((supplier) => supplier.products.map((product) => /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "flex gap-4 items-start",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden flex items-center justify-center text-outline",
+                        children: [
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                            className: "material-symbols-outlined text-2xl",
+                            children: product.type === "Custom" ? "brush" : "inventory_2"
+                          }, undefined, false, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                            className: "absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full",
+                            children: product.quantity >= 1000 ? `${Math.floor(product.quantity / 1000)}k` : product.quantity
+                          }, undefined, false, undefined, this)
+                        ]
+                      }, undefined, true, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "flex-grow flex flex-col justify-between h-20 py-1",
+                        children: [
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            children: [
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h4", {
+                                className: "font-body font-medium text-on-surface line-clamp-2",
+                                children: product.name
+                              }, undefined, false, undefined, this),
+                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                                className: "font-label text-xs text-on-surface-variant mt-1 line-clamp-1",
+                                children: product.description
+                              }, undefined, false, undefined, this)
+                            ]
+                          }, undefined, true, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                            className: "font-label text-sm text-on-surface font-medium",
+                            children: [
+                              product.symbol,
+                              product.total.toFixed(2)
+                            ]
+                          }, undefined, true, undefined, this)
+                        ]
+                      }, undefined, true, undefined, this)
+                    ]
+                  }, product.sku, true, undefined, this)))
+                }, undefined, false, undefined, this),
                 /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
                   className: "flex gap-3",
                   children: [
@@ -19855,6 +19906,7 @@ function Checkout() {
                       ]
                     }, undefined, true, undefined, this),
                     /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                      type: "button",
                       className: "bg-surface-container-high text-on-surface font-headline font-semibold px-6 py-2 rounded-lg hover:bg-surface-dim transition-colors self-end h-[42px]",
                       children: "Apply"
                     }, undefined, false, undefined, this)
@@ -19871,7 +19923,7 @@ function Checkout() {
                         }, undefined, false, undefined, this),
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                           className: "font-label text-on-surface",
-                          children: "$250.00"
+                          children: subtotal !== null ? `${symbol}${subtotal.toFixed(2)}` : "—"
                         }, undefined, false, undefined, this)
                       ]
                     }, undefined, true, undefined, this),
@@ -19882,20 +19934,8 @@ function Checkout() {
                           children: "Shipping"
                         }, undefined, false, undefined, this),
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          className: "text-xs",
-                          children: "Calculated at next step"
-                        }, undefined, false, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "flex justify-between items-center font-body text-sm text-on-surface-variant",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          children: "Taxes"
-                        }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                           className: "font-label text-on-surface",
-                          children: "$20.00"
+                          children: shippingTotal !== null ? `${symbol}${shippingTotal.toFixed(2)}` : "Calculated at next step"
                         }, undefined, false, undefined, this)
                       ]
                     }, undefined, true, undefined, this)
@@ -19913,11 +19953,11 @@ function Checkout() {
                       children: [
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                           className: "font-label text-xs text-on-surface-variant",
-                          children: "USD"
+                          children: currency
                         }, undefined, false, undefined, this),
                         /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
                           className: "font-headline font-black text-3xl tracking-tight text-primary",
-                          children: "$270.00"
+                          children: total !== null ? `${symbol}${total.toFixed(2)}` : "—"
                         }, undefined, false, undefined, this)
                       ]
                     }, undefined, true, undefined, this)
@@ -19976,6 +20016,21 @@ function Checkout() {
 // public/pages/OrderConfirmation.tsx
 var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
 function OrderConfirmation() {
+  const location = useLocation();
+  const state = location.state;
+  if (!state || !state.purchaseOrders || state.purchaseOrders.length === 0) {
+    return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(Navigate, {
+      to: "/",
+      replace: true
+    }, undefined, false, undefined, this);
+  }
+  const { purchaseOrders, shippingAddress } = state;
+  const orderRef = `#NI-${purchaseOrders[0].poId.toString().padStart(4, "0")}-ECO`;
+  const itemsTotal = purchaseOrders.reduce((sum, po) => sum + po.itemTotal, 0);
+  const shippingTotal = purchaseOrders.reduce((sum, po) => sum + po.shippingFee, 0);
+  const orderTotal = purchaseOrders.reduce((sum, po) => sum + po.orderTotal, 0);
+  const { currency, symbol } = purchaseOrders[0];
+  const hasAddress = shippingAddress.firstName || shippingAddress.address;
   return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
     className: "bg-background text-on-background font-body antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col",
     children: [
@@ -19999,7 +20054,6 @@ function OrderConfirmation() {
                   className: "inline-flex items-center justify-center w-20 h-20 rounded-full bg-secondary-container text-on-secondary-container mb-6",
                   children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
                     className: "material-symbols-outlined text-4xl",
-                    "data-weight": "fill",
                     style: { fontVariationSettings: "'FILL' 1" },
                     children: "check_circle"
                   }, undefined, false, undefined, this)
@@ -20021,7 +20075,7 @@ function OrderConfirmation() {
                     }, undefined, false, undefined, this),
                     /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
                       className: "font-label text-lg font-semibold text-primary mt-1",
-                      children: "#NI-8492-ECO"
+                      children: orderRef
                     }, undefined, false, undefined, this)
                   ]
                 }, undefined, true, undefined, this)
@@ -20037,157 +20091,81 @@ function OrderConfirmation() {
                       className: "font-headline text-2xl font-bold text-primary mb-8 tracking-tight",
                       children: "The Archive"
                     }, undefined, false, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                      className: "space-y-8",
+                    purchaseOrders.map((po, poIdx) => /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                      className: poIdx < purchaseOrders.length - 1 ? "mb-10" : "",
                       children: [
                         /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                          className: "flex flex-col sm:flex-row gap-6 ghost-border-bottom pb-8",
+                          className: "flex items-center gap-2 mb-4",
                           children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                              className: "w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 relative",
-                              children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("img", {
-                                alt: "Custom Compostable Mailers",
-                                className: "w-full h-full object-cover",
-                                src: "https://lh3.googleusercontent.com/aida-public/AB6AXuD91hCMJoY8At5JS28_bMmF0bPuZ0ei07ImSC8Vl9Gd5STLjDMYl6WTxS9PW9QilY5CUcPL-wkB7Fw7Ae1EFt5-2IdZYcGU0B05L1Grn5qoiyQfpvL2Rl5fQ9suoC5uuHemG4sUcm2LHQZhvfDitjXJZEdR5Hx8kIpdHaTLdyVSUbNy44E_PvZtAvCwqhldUcWbQXDLeAWUpRu7WV-XopKy9eDupMP3pJ_zFRAVKtbJjs8B61MIAiX_1FyY29N_TNJVL_gAavW00ik"
-                              }, undefined, false, undefined, this)
+                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                              className: "material-symbols-outlined text-sm text-outline",
+                              children: "store"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                              className: "flex-grow flex flex-col justify-center",
-                              children: [
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                                  className: "flex justify-between items-start mb-2",
-                                  children: [
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
-                                      className: "font-headline text-lg font-bold text-on-surface",
-                                      children: "Custom Compostable Mailers"
-                                    }, undefined, false, undefined, this),
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                      className: "font-label text-md font-semibold text-primary",
-                                      children: "$145.00"
-                                    }, undefined, false, undefined, this)
-                                  ]
-                                }, undefined, true, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
-                                  className: "font-body text-sm text-on-surface-variant mb-3",
-                                  children: 'Matte Black / 10x13" / Qty: 250'
-                                }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                                  className: "flex flex-wrap gap-2 mt-auto",
-                                  children: [
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                      className: "inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label text-[10px] uppercase tracking-widest",
-                                      children: "Compostable"
-                                    }, undefined, false, undefined, this),
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                      className: "inline-flex items-center px-3 py-1 rounded-full bg-surface text-on-surface-variant font-label text-[10px] uppercase tracking-widest border border-outline-variant/30",
-                                      children: "Soy Ink"
-                                    }, undefined, false, undefined, this)
-                                  ]
-                                }, undefined, true, undefined, this)
-                              ]
-                            }, undefined, true, undefined, this)
+                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                              className: "font-label text-xs uppercase tracking-widest text-outline",
+                              children: po.supplierName
+                            }, undefined, false, undefined, this)
                           ]
                         }, undefined, true, undefined, this),
                         /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                          className: "flex flex-col sm:flex-row gap-6 ghost-border-bottom pb-8",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                              className: "w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 relative",
-                              children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("img", {
-                                alt: "Recycled Tissue Paper",
-                                className: "w-full h-full object-cover",
-                                src: "https://lh3.googleusercontent.com/aida-public/AB6AXuC84J0uGVmUt69-EQn1iMh0LLkxA6KxVqGyBAZvNwzX0p4I8AkQb1jNadRvB33Gk6vLrfQhMAErlRGElCwkXHDKAJuN1XHP301HsnvFFWa1a_RHIE7cZXisqdr_KpOhiW6oAcvj45AXuaQZHjbymLySIIvT5zdFS2S_8gvF5zb6TbLN4IFhTIEuFvqbhUW-Ei0OKxfeZYpE17_iYfhCoR_tuaz9FWlBapFjPsOk_vznXkJtr-dKvKn378rtQlvzELH9D6rY77UQhgM"
-                              }, undefined, false, undefined, this)
-                            }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                              className: "flex-grow flex flex-col justify-center",
-                              children: [
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                                  className: "flex justify-between items-start mb-2",
-                                  children: [
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
-                                      className: "font-headline text-lg font-bold text-on-surface",
-                                      children: "Recycled Tissue Paper"
-                                    }, undefined, false, undefined, this),
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                      className: "font-label text-md font-semibold text-primary",
-                                      children: "$85.00"
-                                    }, undefined, false, undefined, this)
-                                  ]
-                                }, undefined, true, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
-                                  className: "font-body text-sm text-on-surface-variant mb-3",
-                                  children: 'Off-White / 15x20" / Qty: 500'
-                                }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                                  className: "flex flex-wrap gap-2 mt-auto",
-                                  children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                    className: "inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label text-[10px] uppercase tracking-widest",
-                                    children: "FSC Certified"
-                                  }, undefined, false, undefined, this)
+                          className: "space-y-8",
+                          children: po.items.map((item, itemIdx) => /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                            className: `flex flex-col sm:flex-row gap-6 ${itemIdx < po.items.length - 1 ? "pb-8 border-b border-outline-variant/10" : ""}`,
+                            children: [
+                              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                                className: "w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-outline",
+                                children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                  className: "material-symbols-outlined text-4xl",
+                                  children: item.productType === "Custom" ? "brush" : "inventory_2"
                                 }, undefined, false, undefined, this)
-                              ]
-                            }, undefined, true, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                          className: "flex flex-col sm:flex-row gap-6",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                              className: "w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 relative",
-                              children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("img", {
-                                alt: "Eco-friendly Stickers",
-                                className: "w-full h-full object-cover",
-                                src: "https://lh3.googleusercontent.com/aida-public/AB6AXuCIx8MKwSTAjtWlHHDLiy3PlEI7rJ5ovByq7LPNza_pL04QNa5SsneGxePasunBy3c0S8L3yRR091V2upJUF-5QWETkP3DKvhMFDZjD-BS25tCpSDnp8bTcuLccqg5vkOrYpAIf1ERNLIszH8oJUVPTX3qEmqGGPBHYPD4eTqRTB1LHyK8nHMKQa0K_TtREJRHfF6gjNNP63zfoffEiiVuvAji03i2DC4ti4VC0YdrUTLMTf42Xei2SxVvArw8CBML0hg6UZokEdO4"
-                              }, undefined, false, undefined, this)
-                            }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                              className: "flex-grow flex flex-col justify-center",
-                              children: [
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                                  className: "flex justify-between items-start mb-2",
-                                  children: [
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
-                                      className: "font-headline text-lg font-bold text-on-surface",
-                                      children: "Eco-friendly Stickers"
-                                    }, undefined, false, undefined, this),
-                                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                      className: "font-label text-md font-semibold text-primary",
-                                      children: "$45.00"
-                                    }, undefined, false, undefined, this)
-                                  ]
-                                }, undefined, true, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
-                                  className: "font-body text-sm text-on-surface-variant mb-3",
-                                  children: 'Circle 2" / Roll / Qty: 1000'
-                                }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                                  className: "flex flex-wrap gap-2 mt-auto",
-                                  children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                    className: "inline-flex items-center px-3 py-1 rounded-full bg-secondary-container text-on-secondary-container font-label text-[10px] uppercase tracking-widest",
-                                    children: "Acid-Free"
-                                  }, undefined, false, undefined, this)
-                                }, undefined, false, undefined, this)
-                              ]
-                            }, undefined, true, undefined, this)
-                          ]
-                        }, undefined, true, undefined, this)
+                              }, undefined, false, undefined, this),
+                              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                                className: "flex-grow flex flex-col justify-center",
+                                children: [
+                                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                                    className: "flex justify-between items-start mb-2",
+                                    children: [
+                                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
+                                        className: "font-headline text-lg font-bold text-on-surface",
+                                        children: item.productName
+                                      }, undefined, false, undefined, this),
+                                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                        className: "font-label text-md font-semibold text-primary ml-4",
+                                        children: [
+                                          symbol,
+                                          item.total.toFixed(2)
+                                        ]
+                                      }, undefined, true, undefined, this)
+                                    ]
+                                  }, undefined, true, undefined, this),
+                                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
+                                    className: "font-body text-sm text-on-surface-variant mb-3",
+                                    children: [
+                                      "Qty: ",
+                                      item.quantity.toLocaleString()
+                                    ]
+                                  }, undefined, true, undefined, this)
+                                ]
+                              }, undefined, true, undefined, this)
+                            ]
+                          }, `${po.poId}-${item.productSku}`, true, undefined, this))
+                        }, undefined, false, undefined, this)
                       ]
-                    }, undefined, true, undefined, this)
+                    }, po.poId, true, undefined, this))
                   ]
                 }, undefined, true, undefined, this),
                 /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
                   className: "md:col-span-4 flex flex-col gap-8",
                   children: [
                     /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                      className: "bg-surface-container-lowest rounded-xl p-8 ambient-shadow relative z-10",
+                      className: "bg-surface-container-lowest rounded-xl p-8 relative z-10",
                       children: [
                         /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
                           className: "font-headline text-xl font-bold text-primary mb-6",
                           children: "Summary"
                         }, undefined, false, undefined, this),
                         /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                          className: "space-y-4 font-body text-sm mb-6 ghost-border-bottom pb-6",
+                          className: "space-y-4 font-body text-sm mb-6 pb-6 border-b border-outline-variant/10",
                           children: [
                             /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
                               className: "flex justify-between text-on-surface-variant",
@@ -20196,30 +20174,25 @@ function OrderConfirmation() {
                                   children: "Subtotal"
                                 }, undefined, false, undefined, this),
                                 /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                  children: "$275.00"
-                                }, undefined, false, undefined, this)
+                                  children: [
+                                    symbol,
+                                    itemsTotal.toFixed(2)
+                                  ]
+                                }, undefined, true, undefined, this)
                               ]
                             }, undefined, true, undefined, this),
                             /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
                               className: "flex justify-between text-on-surface-variant",
                               children: [
                                 /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                  children: "Carbon Neutral Shipping"
+                                  children: "Shipping"
                                 }, undefined, false, undefined, this),
                                 /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                  children: "$12.50"
-                                }, undefined, false, undefined, this)
-                              ]
-                            }, undefined, true, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                              className: "flex justify-between text-on-surface-variant",
-                              children: [
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                  children: "Taxes"
-                                }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                                  children: "$22.00"
-                                }, undefined, false, undefined, this)
+                                  children: [
+                                    symbol,
+                                    shippingTotal.toFixed(2)
+                                  ]
+                                }, undefined, true, undefined, this)
                               ]
                             }, undefined, true, undefined, this)
                           ]
@@ -20233,17 +20206,18 @@ function OrderConfirmation() {
                             }, undefined, false, undefined, this),
                             /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
                               className: "font-label text-xl font-bold text-primary",
-                              children: "$309.50"
-                            }, undefined, false, undefined, this)
+                              children: [
+                                currency,
+                                " ",
+                                symbol,
+                                orderTotal.toFixed(2)
+                              ]
+                            }, undefined, true, undefined, this)
                           ]
-                        }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
-                          className: "block w-full text-center py-4 rounded-xl btn-primary-gradient text-on-primary font-headline font-bold tracking-wide transition-opacity hover:opacity-90",
-                          children: "Track Shipment"
-                        }, undefined, false, undefined, this)
+                        }, undefined, true, undefined, this)
                       ]
                     }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    hasAddress && /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
                       className: "bg-surface-container-low rounded-xl p-8",
                       children: [
                         /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
@@ -20262,26 +20236,19 @@ function OrderConfirmation() {
                         /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("address", {
                           className: "font-body text-sm text-on-surface-variant not-italic leading-relaxed",
                           children: [
-                            "Studio Minimal",
+                            shippingAddress.firstName,
+                            " ",
+                            shippingAddress.lastName,
                             /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("br", {}, undefined, false, undefined, this),
-                            "123 Artisan Way, Suite B",
+                            shippingAddress.address,
+                            shippingAddress.apartment ? `, ${shippingAddress.apartment}` : "",
                             /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("br", {}, undefined, false, undefined, this),
-                            "Portland, OR 97209",
+                            shippingAddress.city,
+                            shippingAddress.state ? `, ${shippingAddress.state}` : "",
+                            " ",
+                            shippingAddress.zip,
                             /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("br", {}, undefined, false, undefined, this),
-                            "United States"
-                          ]
-                        }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
-                          className: "mt-4 pt-4 ghost-border-bottom border-t-0",
-                          children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                              className: "font-label text-xs uppercase tracking-widest text-outline block mb-1",
-                              children: "Est. Delivery"
-                            }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
-                              className: "font-body text-sm font-semibold text-on-surface",
-                              children: "Oct 24 - Oct 28"
-                            }, undefined, false, undefined, this)
+                            shippingAddress.country
                           ]
                         }, undefined, true, undefined, this)
                       ]

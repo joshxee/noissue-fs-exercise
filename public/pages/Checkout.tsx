@@ -1,7 +1,121 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import type {
+  CartResponse,
+  CartErrorResponse,
+  CartData,
+  CheckoutResponse,
+  CheckoutErrorResponse,
+  ShippingAddress,
+  ConfirmationState,
+} from '../types/api';
+
+type FormState = {
+  email: string;
+  newsletter: boolean;
+  country: string;
+  firstName: string;
+  lastName: string;
+  address: string;
+  apartment: string;
+  city: string;
+  state: string;
+  zip: string;
+  paymentMethod: string;
+};
+
+type CartState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'success'; data: CartData }
+  | { status: 'error'; message: string };
+
+type SubmitState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; message: string };
+
+const INITIAL_FORM: FormState = {
+  email: '',
+  newsletter: false,
+  country: 'US',
+  firstName: '',
+  lastName: '',
+  address: '',
+  apartment: '',
+  city: '',
+  state: '',
+  zip: '',
+  paymentMethod: 'credit_card',
+};
 
 export default function Checkout() {
+  const navigate = useNavigate();
+  const [cartState, setCartState] = React.useState<CartState>({ status: 'idle' });
+  const [submitState, setSubmitState] = React.useState<SubmitState>({ status: 'idle' });
+  const [form, setForm] = React.useState<FormState>(INITIAL_FORM);
+
+  React.useEffect(() => {
+    setCartState({ status: 'loading' });
+    fetch('/api/cart')
+      .then(res => res.json())
+      .then((json: CartResponse | CartErrorResponse) => {
+        if (json.success) {
+          setCartState({ status: 'success', data: json.data });
+        } else {
+          setCartState({ status: 'error', message: json.error });
+        }
+      })
+      .catch(() => setCartState({ status: 'error', message: 'Unable to load cart' }));
+  }, []);
+
+  const handleField = (field: keyof FormState) => (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+  ) => setForm(prev => ({ ...prev, [field]: e.target.value }));
+
+  const handleCheckbox = (field: keyof FormState) => (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => setForm(prev => ({ ...prev, [field]: e.target.checked }));
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitState({ status: 'loading' });
+
+    fetch('/api/checkout', { method: 'POST' })
+      .then(res => res.json())
+      .then((json: CheckoutResponse | CheckoutErrorResponse) => {
+        if (json.success) {
+          const shippingAddress: ShippingAddress = {
+            email: form.email,
+            firstName: form.firstName,
+            lastName: form.lastName,
+            address: form.address,
+            apartment: form.apartment,
+            city: form.city,
+            state: form.state,
+            zip: form.zip,
+            country: form.country,
+          };
+          const state: ConfirmationState = {
+            purchaseOrders: json.data.purchaseOrders,
+            shippingAddress,
+          };
+          navigate('/confirmation', { state });
+        } else {
+          setSubmitState({ status: 'error', message: json.error });
+        }
+      })
+      .catch(() =>
+        setSubmitState({ status: 'error', message: 'Checkout failed. Please try again.' })
+      );
+  };
+
+  const subtotal = cartState.status === 'success' ? cartState.data.grandTotal : null;
+  const shippingTotal = cartState.status === 'success' ? cartState.data.shippingTotal : null;
+  const total = subtotal !== null && shippingTotal !== null ? subtotal + shippingTotal : null;
+  const symbol = cartState.status === 'success' ? cartState.data.symbol : '$';
+  const currency = cartState.status === 'success' ? cartState.data.currency : 'NZD';
+
   return (
     <div className="bg-background text-on-background font-body antialiased min-h-screen flex flex-col">
       <header className="bg-[#fcf9f8]/80 dark:bg-[#1b1c1c]/80 backdrop-blur-xl w-full sticky top-0 z-50">
@@ -15,10 +129,10 @@ export default function Checkout() {
             noissue
           </a>
           <div className="flex gap-4 items-center">
-            <button className="text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200">
+            <button type="button" className="text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200">
               <span className="material-symbols-outlined" data-icon="shopping_bag">shopping_bag</span>
             </button>
-            <button className="text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200">
+            <button type="button" className="text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200">
               <span className="material-symbols-outlined" data-icon="person">person</span>
             </button>
           </div>
@@ -27,16 +141,29 @@ export default function Checkout() {
       </header>
 
       <main className="flex-grow w-full max-w-7xl mx-auto px-6 py-12 md:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 relative">
-        <div className="lg:col-span-7 space-y-16">
+        <form className="lg:col-span-7 space-y-16" onSubmit={handleSubmit}>
           <section className="bg-surface-container-low p-8 rounded-xl transition-all duration-300">
             <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface mb-8">Contact Information</h2>
             <div className="space-y-6">
               <div className="relative">
-                <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="email" placeholder="Email Address" type="email" />
+                <input
+                  className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                  id="email"
+                  placeholder="Email Address"
+                  type="email"
+                  value={form.email}
+                  onChange={handleField('email')}
+                />
                 <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="email">Email Address</label>
               </div>
               <div className="flex items-center gap-3 mt-4">
-                <input className="rounded-DEFAULT border-outline-variant/50 text-primary focus:ring-primary bg-transparent w-4 h-4" id="newsletter" type="checkbox" />
+                <input
+                  className="rounded-DEFAULT border-outline-variant/50 text-primary focus:ring-primary bg-transparent w-4 h-4"
+                  id="newsletter"
+                  type="checkbox"
+                  checked={form.newsletter}
+                  onChange={handleCheckbox('newsletter')}
+                />
                 <label className="font-body text-sm text-on-surface-variant" htmlFor="newsletter">Email me with news and eco-packaging offers</label>
               </div>
             </div>
@@ -46,7 +173,12 @@ export default function Checkout() {
             <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface mb-8">Delivery</h2>
             <div className="space-y-6">
               <div className="relative">
-                <select className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body" id="country" defaultValue="US">
+                <select
+                  className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body"
+                  id="country"
+                  value={form.country}
+                  onChange={handleField('country')}
+                >
                   <option value="US">United States</option>
                   <option value="CA">Canada</option>
                   <option value="UK">United Kingdom</option>
@@ -56,29 +188,69 @@ export default function Checkout() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="relative">
-                  <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="firstName" placeholder="First Name" type="text" />
+                  <input
+                    className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                    id="firstName"
+                    placeholder="First Name"
+                    type="text"
+                    value={form.firstName}
+                    onChange={handleField('firstName')}
+                  />
                   <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="firstName">First Name</label>
                 </div>
                 <div className="relative">
-                  <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="lastName" placeholder="Last Name" type="text" />
+                  <input
+                    className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                    id="lastName"
+                    placeholder="Last Name"
+                    type="text"
+                    value={form.lastName}
+                    onChange={handleField('lastName')}
+                  />
                   <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="lastName">Last Name</label>
                 </div>
               </div>
               <div className="relative">
-                <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="address" placeholder="Address" type="text" />
+                <input
+                  className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                  id="address"
+                  placeholder="Address"
+                  type="text"
+                  value={form.address}
+                  onChange={handleField('address')}
+                />
                 <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="address">Address</label>
               </div>
               <div className="relative">
-                <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="apartment" placeholder="Apartment, suite, etc. (optional)" type="text" />
+                <input
+                  className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                  id="apartment"
+                  placeholder="Apartment, suite, etc. (optional)"
+                  type="text"
+                  value={form.apartment}
+                  onChange={handleField('apartment')}
+                />
                 <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="apartment">Apartment, suite, etc. (optional)</label>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="relative md:col-span-1">
-                  <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="city" placeholder="City" type="text" />
+                  <input
+                    className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                    id="city"
+                    placeholder="City"
+                    type="text"
+                    value={form.city}
+                    onChange={handleField('city')}
+                  />
                   <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="city">City</label>
                 </div>
                 <div className="relative md:col-span-1">
-                  <select className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body text-outline" id="state" defaultValue="">
+                  <select
+                    className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body text-outline"
+                    id="state"
+                    value={form.state}
+                    onChange={handleField('state')}
+                  >
                     <option disabled value="">State</option>
                     <option value="CA">California</option>
                     <option value="NY">New York</option>
@@ -87,7 +259,14 @@ export default function Checkout() {
                   <span className="material-symbols-outlined absolute right-0 top-3 text-outline pointer-events-none" data-icon="expand_more">expand_more</span>
                 </div>
                 <div className="relative md:col-span-1">
-                  <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="zip" placeholder="ZIP code" type="text" />
+                  <input
+                    className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                    id="zip"
+                    placeholder="ZIP code"
+                    type="text"
+                    value={form.zip}
+                    onChange={handleField('zip')}
+                  />
                   <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="zip">ZIP code</label>
                 </div>
               </div>
@@ -107,103 +286,138 @@ export default function Checkout() {
             <p className="font-body text-sm text-on-surface-variant mb-6">All transactions are secure and encrypted.</p>
             <div className="space-y-4">
               <label className="flex items-center gap-4 p-4 border border-outline-variant/20 rounded-lg cursor-pointer bg-surface transition-colors hover:bg-surface-container-highest">
-                <input defaultChecked className="text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline" name="payment" type="radio" value="credit_card" />
+                <input
+                  className="text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline"
+                  name="payment"
+                  type="radio"
+                  value="credit_card"
+                  checked={form.paymentMethod === 'credit_card'}
+                  onChange={handleField('paymentMethod')}
+                />
                 <div className="flex-grow font-body text-on-surface font-medium">Credit card</div>
                 <div className="flex gap-2 text-outline">
                   <span className="material-symbols-outlined" data-icon="credit_card">credit_card</span>
                 </div>
               </label>
               <label className="flex items-center gap-4 p-4 border border-outline-variant/20 rounded-lg cursor-pointer bg-surface transition-colors hover:bg-surface-container-highest">
-                <input className="text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline" name="payment" type="radio" value="paypal" />
+                <input
+                  className="text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline"
+                  name="payment"
+                  type="radio"
+                  value="paypal"
+                  checked={form.paymentMethod === 'paypal'}
+                  onChange={handleField('paymentMethod')}
+                />
                 <div className="flex-grow font-body text-on-surface font-medium">PayPal</div>
               </label>
             </div>
           </section>
 
           <div className="flex flex-col-reverse md:flex-row justify-between items-center gap-6 pt-8">
-            <button className="font-headline font-semibold text-tertiary flex items-center gap-2 hover:text-tertiary-container transition-colors">
+            <button type="button" className="font-headline font-semibold text-tertiary flex items-center gap-2 hover:text-tertiary-container transition-colors">
               <span className="material-symbols-outlined text-sm" data-icon="chevron_left">chevron_left</span>
               Return to cart
             </button>
-            <Link to="/confirmation" className="w-full md:w-auto bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold py-4 px-10 rounded-xl hover:opacity-90 transition-opacity text-center">
-              Pay now
-            </Link>
+            <div className="flex flex-col items-end gap-2 w-full md:w-auto">
+              <button
+                type="submit"
+                disabled={submitState.status === 'loading'}
+                className="w-full md:w-auto bg-gradient-to-r from-primary to-primary-container text-on-primary font-headline font-bold py-4 px-10 rounded-xl hover:opacity-90 transition-opacity text-center disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {submitState.status === 'loading' ? 'Processing...' : 'Pay now'}
+              </button>
+              {submitState.status === 'error' && (
+                <p className="text-sm text-red-600 font-body">{submitState.message}</p>
+              )}
+            </div>
           </div>
-        </div>
+        </form>
 
         <div className="lg:col-span-5 relative">
           <div className="sticky top-28 bg-surface-container-low p-8 rounded-xl flex flex-col gap-8 shadow-[0_12px_40px_-15px_rgba(27,28,28,0.05)]">
             <h3 className="font-headline text-xl font-bold tracking-tight text-on-surface">Order Archive</h3>
+
             <div className="space-y-6">
-              <div className="flex gap-4 items-start">
-                <div className="relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden">
-                  <img alt="Custom Compostable Mailer" className="w-full h-full object-cover mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuD-W9ARCmSrqSfNC4hbtOo865s1nFEiNJ00pCDETUkNMjjQbRTFgAmzSbKenXtH8ErO6CB_-wzL8Dd8VPD6r4bxSxuK5F1YRQeh1KJkVhQYV_rirprCP19wNmyamLJiZiD4a3ZhJGCtByvGFWYj8lOfPK4DoztL1BY7JvD-J0Bbsxm7pUbC19z29oIMbx-_ET-MdWdV7y_fdhYm96Jn0k7NWxtQEmuXFuOLRmd4n9Qjg155hK5QTh0d8S2McLFcQ4cS1JlEzA05z_s" />
-                  <span className="absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full">1</span>
-                </div>
-                <div className="flex-grow flex flex-col justify-between h-20 py-1">
-                  <div>
-                    <h4 className="font-body font-medium text-on-surface line-clamp-2">Custom Compostable Mailers</h4>
-                    <p className="font-label text-xs text-on-surface-variant mt-1">260 x 385mm / 10.2 x 15"</p>
+              {cartState.status === 'idle' || cartState.status === 'loading' ? (
+                [1, 2, 3].map(i => (
+                  <div key={i} className="flex gap-4 items-start animate-pulse">
+                    <div className="w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg" />
+                    <div className="flex-grow space-y-2 py-2">
+                      <div className="h-4 bg-surface-container rounded w-3/4" />
+                      <div className="h-3 bg-surface-container rounded w-1/2" />
+                      <div className="h-3 bg-surface-container rounded w-1/4 mt-2" />
+                    </div>
                   </div>
-                  <div className="font-label text-sm text-on-surface font-medium">$120.00</div>
+                ))
+              ) : cartState.status === 'error' ? (
+                <div className="bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3">
+                  <span className="material-symbols-outlined text-outline">error</span>
+                  {cartState.message}
                 </div>
-              </div>
-              <div className="flex gap-4 items-start">
-                <div className="relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden">
-                  <img alt="Recycled Tissue Paper" className="w-full h-full object-cover mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB-2yqydMppvXMLbixl3KMnRQRMmYUsGw-FgWAe3VgL-2VwUdSTPkRulOGn_vcntNvtbOdqgSU9FToR3d3aBnjjWvUeuZz19CYmijeZZfrnikFygb92j0cFTlQgffFmz7NgBfw_goNQHE9fFF6fgGOZPYBfYe79Ez_IUk7ulcH9anthYX2fOj7BWlb44CzO7JtBYpNJCnYtZ5OzRCfOj2lDPlwEhSpCk6qlH6W7_TtZ_oiu_TXCx4ssI_VJuRYSwLqdSROaAKh4tVI" />
-                  <span className="absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full">2</span>
-                </div>
-                <div className="flex-grow flex flex-col justify-between h-20 py-1">
-                  <div>
-                    <h4 className="font-body font-medium text-on-surface line-clamp-2">Recycled Tissue Paper</h4>
-                    <p className="font-label text-xs text-on-surface-variant mt-1">1 Color / 380 x 500mm</p>
-                  </div>
-                  <div className="font-label text-sm text-on-surface font-medium">$85.00</div>
-                </div>
-              </div>
-              <div className="flex gap-4 items-start">
-                <div className="relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden">
-                  <img alt="Eco-friendly Stickers" className="w-full h-full object-cover mix-blend-multiply" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTUsQKaPzYiRzn_weK2nZOvu4aAkrp_8ZWJB9gsaWq2mYoyDVU7S2fQvWP9YlpH1N0j4KnEDLRBUstBlorG7U3Tz6p5clGAa2Y8u7sEFk6tcxyewPPWQ6y2krpdmI9VRBzpgkp-NYRWuXREANqmEjL-ptr-8yUQV4yjjEJsP2GPqtJtuOzaJCVfQnYB5SMW3mE54nYmPthaC9mdcN1loJDTY6dDf7RRe91muqjOpQfr_nYbdyvXisD3befsp2DFv_QM4YgpNv3NZk" />
-                  <span className="absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full">5</span>
-                </div>
-                <div className="flex-grow flex flex-col justify-between h-20 py-1">
-                  <div>
-                    <h4 className="font-body font-medium text-on-surface line-clamp-2">Eco-friendly Stickers</h4>
-                    <p className="font-label text-xs text-on-surface-variant mt-1">Circle / 50 x 50mm</p>
-                  </div>
-                  <div className="font-label text-sm text-on-surface font-medium">$45.00</div>
-                </div>
-              </div>
+              ) : (
+                cartState.data.suppliers.flatMap(supplier =>
+                  supplier.products.map(product => (
+                    <div key={product.sku} className="flex gap-4 items-start">
+                      <div className="relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden flex items-center justify-center text-outline">
+                        <span className="material-symbols-outlined text-2xl">
+                          {product.type === 'Custom' ? 'brush' : 'inventory_2'}
+                        </span>
+                        <span className="absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full">
+                          {product.quantity >= 1000
+                            ? `${Math.floor(product.quantity / 1000)}k`
+                            : product.quantity}
+                        </span>
+                      </div>
+                      <div className="flex-grow flex flex-col justify-between h-20 py-1">
+                        <div>
+                          <h4 className="font-body font-medium text-on-surface line-clamp-2">{product.name}</h4>
+                          <p className="font-label text-xs text-on-surface-variant mt-1 line-clamp-1">{product.description}</p>
+                        </div>
+                        <div className="font-label text-sm text-on-surface font-medium">
+                          {product.symbol}{product.total.toFixed(2)}
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
+              )}
             </div>
 
             <div className="flex gap-3">
               <div className="relative flex-grow">
-                <input className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent" id="discount" placeholder="Discount code" type="text" />
+                <input
+                  className="w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 peer transition-colors placeholder-transparent"
+                  id="discount"
+                  placeholder="Discount code"
+                  type="text"
+                />
                 <label className="absolute left-0 top-3 text-outline text-sm font-label peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary transition-all peer-placeholder-shown:top-3 peer-placeholder-shown:text-base" htmlFor="discount">Discount code</label>
               </div>
-              <button className="bg-surface-container-high text-on-surface font-headline font-semibold px-6 py-2 rounded-lg hover:bg-surface-dim transition-colors self-end h-[42px]">Apply</button>
+              <button type="button" className="bg-surface-container-high text-on-surface font-headline font-semibold px-6 py-2 rounded-lg hover:bg-surface-dim transition-colors self-end h-[42px]">Apply</button>
             </div>
 
             <div className="space-y-3 pt-6 border-t border-outline-variant/10">
               <div className="flex justify-between items-center font-body text-sm text-on-surface-variant">
                 <span>Subtotal</span>
-                <span className="font-label text-on-surface">$250.00</span>
+                <span className="font-label text-on-surface">
+                  {subtotal !== null ? `${symbol}${subtotal.toFixed(2)}` : '—'}
+                </span>
               </div>
               <div className="flex justify-between items-center font-body text-sm text-on-surface-variant">
                 <span>Shipping</span>
-                <span className="text-xs">Calculated at next step</span>
-              </div>
-              <div className="flex justify-between items-center font-body text-sm text-on-surface-variant">
-                <span>Taxes</span>
-                <span className="font-label text-on-surface">$20.00</span>
+                <span className="font-label text-on-surface">
+                  {shippingTotal !== null ? `${symbol}${shippingTotal.toFixed(2)}` : 'Calculated at next step'}
+                </span>
               </div>
             </div>
 
             <div className="flex justify-between items-end pt-6 border-t border-outline-variant/10">
               <span className="font-headline font-bold text-lg text-on-surface">Total</span>
               <div className="flex items-baseline gap-2">
-                <span className="font-label text-xs text-on-surface-variant">USD</span>
-                <span className="font-headline font-black text-3xl tracking-tight text-primary">$270.00</span>
+                <span className="font-label text-xs text-on-surface-variant">{currency}</span>
+                <span className="font-headline font-black text-3xl tracking-tight text-primary">
+                  {total !== null ? `${symbol}${total.toFixed(2)}` : '—'}
+                </span>
               </div>
             </div>
           </div>
