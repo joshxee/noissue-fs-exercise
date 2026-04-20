@@ -219,10 +219,28 @@ Processes the checkout: groups cart items by supplier, creates one purchase orde
 Checkout page mounts
   → GET /api/cart
   → renders 6 real products across 4 suppliers in Order Archive sidebar
-  → shows NZD subtotal, shipping, and total calculated from API response
+  → shows NZD subtotal only (shipping hidden until user selects method)
 
-User fills delivery/payment form → clicks "Pay now"
-  → POST /api/checkout
+Step 1 — Contact: user enters email (required, validated on blur)
+
+Step 2 — Delivery: user fills address fields
+  → required: Address Line 1, City, Postcode, Country (default: New Zealand)
+  → optional: First Name, Last Name, Apartment/suite, State/Region (free text)
+  → once all 4 required fields are non-empty → Shipping method section reveals
+
+Step 3 — Shipping: user selects "Standard Shipping – NZD $50.00"
+  → shipping line item appears in order summary
+  → total updates: grandTotal + $50
+
+Step 4 — Payment: user fills credit card fields
+  → card number auto-formats to groups of 4 (XXXX XXXX XXXX XXXX)
+  → expiry auto-formats to MM/YY
+  → Luhn algorithm validates card number on blur
+  → Pay now button enables only when all validation passes:
+     email valid + address complete + shipping selected + card valid
+
+User clicks "Pay now"
+  → POST /api/checkout (no body — cart is read from DB server-side)
   → on success: navigate('/confirmation', { state: { purchaseOrders, shippingAddress } })
 
 Confirmation page reads location.state
@@ -232,7 +250,7 @@ Confirmation page reads location.state
   → if location.state is absent (direct navigation or page refresh) → redirect to /
 ```
 
-Form data (name, address) is captured as controlled React state and passed via React Router's `location.state`. It is never sent to the backend.
+Form data (name, address) is captured as controlled React state and passed to the confirmation page via React Router's `location.state`. Card details are validated client-side only and never sent to the backend.
 
 ---
 
@@ -270,9 +288,29 @@ Both `GET /api/cart` and `processCheckout` join tables in application code using
 
 ---
 
+## Form Validation
+
+Client-side only. Validation runs on blur per field and on submit attempt.
+
+| Field | Rule |
+|---|---|
+| Email | Required; must match `user@domain.tld` pattern |
+| Address Line 1 | Required (non-empty after trim) |
+| City | Required (non-empty after trim) |
+| Postcode | Required (non-empty after trim) |
+| Shipping method | Must be selected (unlocks after address is complete) |
+| Card number | Required; 16 digits after stripping spaces; Luhn algorithm |
+| Cardholder name | Required (non-empty after trim) |
+| Expiry | Required; `MM/YY` format; month 01–12; not in the past |
+| CVV | Required; 3–4 digits |
+
+The Pay Now button only becomes active when all of the above pass simultaneously. On submit with invalid state, all fields are marked touched and errors are shown inline with `role="alert"` for screen reader support.
+
+---
+
 ## Known Limitations (exercise scope)
 
 - **No idempotency on checkout** — calling `POST /api/checkout` twice creates duplicate purchase orders. The submit button is disabled client-side during the in-flight request but there is no server-side guard.
 - **State lost on refresh** — the confirmation page redirects to `/` if `location.state` is absent. A production implementation would persist orders by ID and expose `GET /api/orders/:id`.
 - **Single global cart** — there is no user session concept; the cart is fixed at server startup.
-- **No payment processing** — the payment method selection (Credit Card / PayPal) is UI-only.
+- **Mock payment only** — credit card fields are validated client-side (Luhn, expiry, CVV format) but no payment gateway integration exists. Card data is never transmitted to the backend.
