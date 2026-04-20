@@ -40,3 +40,6 @@ yarn-error.log*
 **/*.log
 package-lock.json
 **/*.bun
+.playwright-mcp/**
+playwright-report/**
+test-results/.last-run.json
