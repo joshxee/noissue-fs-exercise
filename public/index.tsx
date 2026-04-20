@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
+import Store from './pages/Store'
 import './index.css'
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
 			<Routes>
 				<Route path="/" element={<Checkout />} />
 				<Route path="/confirmation" element={<OrderConfirmation />} />
+				<Route path="/store" element={<Store />} />
 			</Routes>
 		</BrowserRouter>
 	)

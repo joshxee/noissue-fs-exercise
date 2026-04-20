@@ -1,6 +1,7 @@
 import { Elysia } from 'elysia';
 import { db } from '../db/db';
 import { cartItems, products, suppliers, shippingFees } from '../db/schema';
+import { seedRandomCart } from '../services/cart';
 
 type CartProductEntry = {
   sku: string;
@@ -80,5 +81,13 @@ export const cartRoute = new Elysia({ prefix: '/api' })
       };
     } catch {
       return { success: false, error: 'Failed to load cart' };
+    }
+  })
+  .post('/cart/random', () => {
+    try {
+      seedRandomCart();
+      return { success: true };
+    } catch {
+      return { success: false, error: 'Failed to generate random cart' };
     }
   });

@@ -138,7 +138,7 @@ export default function OrderConfirmation() {
           </div>
 
           <div className="mt-16 text-center">
-            <Link className="inline-flex items-center gap-2 font-headline font-semibold text-primary hover:text-surface-tint transition-colors group" to="/">
+            <Link className="inline-flex items-center gap-2 font-headline font-semibold text-primary hover:text-surface-tint transition-colors group" to="/store">
               <span className="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
               Return to Store
             </Link>

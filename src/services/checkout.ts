@@ -103,5 +103,8 @@ export async function processCheckout() {
     });
   }
 
+  // Cart is cleared once orders are committed — mirrors production behaviour
+  db.delete(cartItems).run();
+
   return generatedPOs;
 }

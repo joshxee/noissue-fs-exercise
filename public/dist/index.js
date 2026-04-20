@@ -19305,6 +19305,36 @@ function useViewTransitionState(to, { relative } = {}) {
 
 // public/pages/Checkout.tsx
 var import_react = __toESM(require_react(), 1);
+
+// public/lib/sessionOrders.ts
+var SESSION_KEY = "noissue_session_orders";
+function readOrders() {
+  try {
+    const raw = sessionStorage.getItem(SESSION_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+function getSessionOrders() {
+  return readOrders();
+}
+function appendSessionOrder(purchaseOrders, shippingAddress) {
+  const existing = readOrders();
+  const newOrder = {
+    id: crypto.randomUUID(),
+    placedAt: new Date().toISOString(),
+    purchaseOrders,
+    shippingAddress
+  };
+  const updated = [...existing, newOrder];
+  try {
+    sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+  } catch {}
+  return updated;
+}
+
+// public/pages/Checkout.tsx
 var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
 var SHIPPING_COST = 50;
 var INITIAL_FORM = {
@@ -19453,6 +19483,7 @@ function Checkout() {
           purchaseOrders: json.data.purchaseOrders,
           shippingAddress
         };
+        appendSessionOrder(json.data.purchaseOrders, shippingAddress);
         navigate("/confirmation", { state: confirmState });
       } else {
         setSubmitState({ status: "error", message: json.error });
@@ -20574,7 +20605,7 @@ function OrderConfirmation() {
               className: "mt-16 text-center",
               children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(Link, {
                 className: "inline-flex items-center gap-2 font-headline font-semibold text-primary hover:text-surface-tint transition-colors group",
-                to: "/",
+                to: "/store",
                 children: [
                   /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
                     className: "material-symbols-outlined group-hover:-translate-x-1 transition-transform",
@@ -20591,23 +20622,268 @@ function OrderConfirmation() {
   }, undefined, true, undefined, this);
 }
 
-// public/index.tsx
+// public/pages/Store.tsx
+var import_react2 = __toESM(require_react(), 1);
 var jsx_dev_runtime3 = __toESM(require_jsx_dev_runtime(), 1);
+function formatDate(iso) {
+  return new Date(iso).toLocaleString("en-NZ", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+function OrderCard({ order, index }) {
+  const grandTotal = order.purchaseOrders.reduce((sum, po) => sum + po.orderTotal, 0);
+  const { symbol, currency } = order.purchaseOrders[0];
+  const orderRef = `#NI-${order.purchaseOrders[0].poId.toString().padStart(4, "0")}-ECO`;
+  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+    className: "bg-surface-container-low rounded-xl p-6 md:p-8",
+    children: [
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+        className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-6 border-b border-outline-variant/10",
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                className: "font-label text-xs uppercase tracking-widest text-outline block mb-1",
+                children: [
+                  "Order ",
+                  index + 1,
+                  " · ",
+                  formatDate(order.placedAt)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                className: "font-label text-base font-semibold text-primary",
+                children: orderRef
+              }, undefined, false, undefined, this)
+            ]
+          }, undefined, true, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+            className: "text-right",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                className: "font-label text-xs uppercase tracking-widest text-outline block mb-1",
+                children: [
+                  currency,
+                  " Total"
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                className: "font-headline text-xl font-bold text-on-surface",
+                children: [
+                  symbol,
+                  grandTotal.toFixed(2)
+                ]
+              }, undefined, true, undefined, this)
+            ]
+          }, undefined, true, undefined, this)
+        ]
+      }, undefined, true, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+        className: "space-y-6",
+        children: order.purchaseOrders.map((po) => /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+          children: [
+            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+              className: "flex items-center gap-2 mb-3",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                  className: "material-symbols-outlined text-sm text-outline",
+                  children: "store"
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                  className: "font-label text-xs uppercase tracking-widest text-outline",
+                  children: po.supplierName
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this),
+            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+              className: "space-y-2 pl-5",
+              children: [
+                po.items.map((item) => /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                  className: "flex justify-between items-center font-body text-sm",
+                  children: [
+                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                      className: "text-on-surface-variant",
+                      children: [
+                        item.productName,
+                        /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                          className: "text-outline ml-2",
+                          children: [
+                            "×",
+                            item.quantity.toLocaleString()
+                          ]
+                        }, undefined, true, undefined, this)
+                      ]
+                    }, undefined, true, undefined, this),
+                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                      className: "text-on-surface font-medium ml-4",
+                      children: [
+                        symbol,
+                        item.total.toFixed(2)
+                      ]
+                    }, undefined, true, undefined, this)
+                  ]
+                }, `${po.poId}-${item.productSku}`, true, undefined, this)),
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                  className: "flex justify-between items-center font-body text-xs text-outline pt-2 border-t border-outline-variant/10",
+                  children: [
+                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                      children: "Shipping"
+                    }, undefined, false, undefined, this),
+                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                      children: [
+                        symbol,
+                        po.shippingFee.toFixed(2)
+                      ]
+                    }, undefined, true, undefined, this)
+                  ]
+                }, undefined, true, undefined, this)
+              ]
+            }, undefined, true, undefined, this)
+          ]
+        }, po.poId, true, undefined, this))
+      }, undefined, false, undefined, this),
+      (order.shippingAddress.firstName || order.shippingAddress.city) && /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+        className: "mt-6 pt-6 border-t border-outline-variant/10 flex items-start gap-2 text-sm font-body text-on-surface-variant",
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+            className: "material-symbols-outlined text-base text-outline mt-0.5",
+            children: "local_shipping"
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+            children: [
+              [order.shippingAddress.firstName, order.shippingAddress.lastName].filter(Boolean).join(" "),
+              order.shippingAddress.city ? ` · ${order.shippingAddress.city}` : "",
+              order.shippingAddress.country ? `, ${order.shippingAddress.country}` : ""
+            ]
+          }, undefined, true, undefined, this)
+        ]
+      }, undefined, true, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+}
+function Store() {
+  const navigate = useNavigate();
+  const orders = getSessionOrders();
+  const [generateState, setGenerateState] = import_react2.default.useState({ status: "idle" });
+  const handleGenerateCart = () => {
+    setGenerateState({ status: "loading" });
+    fetch("/api/cart/random", { method: "POST" }).then((res) => {
+      if (!res.ok)
+        throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }).then((json) => {
+      if (json.success) {
+        navigate("/");
+      } else {
+        setGenerateState({ status: "error", message: json.error ?? "Failed to generate cart" });
+      }
+    }).catch(() => setGenerateState({ status: "error", message: "Could not generate a new cart. Please try again." }));
+  };
+  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+    className: "bg-background text-on-background font-body antialiased min-h-screen flex flex-col",
+    children: [
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("header", {
+        className: "w-full flex justify-center py-8 bg-background z-50",
+        children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(Link, {
+          className: "font-headline text-3xl font-black tracking-[-0.04em] text-primary",
+          to: "/",
+          children: "noissue"
+        }, undefined, false, undefined, this)
+      }, undefined, false, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("main", {
+        className: "flex-grow flex flex-col items-center px-4 sm:px-6 lg:px-8 py-12 md:py-20",
+        children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+          className: "max-w-3xl w-full",
+          children: [
+            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+              className: "text-center mb-16",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                  className: "inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-6",
+                  children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                    className: "material-symbols-outlined text-4xl",
+                    style: { fontVariationSettings: "'FILL' 1" },
+                    children: "storefront"
+                  }, undefined, false, undefined, this)
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("h1", {
+                  className: "font-headline text-4xl md:text-5xl font-extrabold tracking-[-0.02em] text-primary mb-4",
+                  children: "Checkout Exercise Complete."
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
+                  className: "font-body text-lg text-on-surface-variant max-w-lg mx-auto",
+                  children: orders.length === 0 ? "No orders placed yet in this session." : `${orders.length} order${orders.length === 1 ? "" : "s"} placed this session.`
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this),
+            orders.length > 0 && /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("section", {
+              className: "mb-16",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("h2", {
+                  className: "font-headline text-2xl font-bold text-primary mb-6 tracking-tight",
+                  children: "Session Orders"
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                  className: "space-y-6",
+                  children: orders.map((order, i) => /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(OrderCard, {
+                    order,
+                    index: i
+                  }, order.id, false, undefined, this))
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this),
+            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+              className: "flex flex-col items-center gap-4 text-center",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
+                  type: "button",
+                  onClick: handleGenerateCart,
+                  disabled: generateState.status === "loading",
+                  className: `font-headline font-bold py-4 px-10 rounded-xl transition-all ${generateState.status === "loading" ? "bg-surface-container-highest text-on-surface-variant opacity-50 cursor-not-allowed" : "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:opacity-90 cursor-pointer"}`,
+                  children: generateState.status === "loading" ? "Generating…" : "Generate New Cart"
+                }, undefined, false, undefined, this),
+                generateState.status === "error" && /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
+                  className: "font-body text-sm text-red-500",
+                  children: generateState.message
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
+                  className: "font-body text-xs text-outline max-w-xs",
+                  children: "Picks a random selection from the product catalogue and starts a new checkout run."
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this)
+          ]
+        }, undefined, true, undefined, this)
+      }, undefined, false, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+}
+
+// public/index.tsx
+var jsx_dev_runtime4 = __toESM(require_jsx_dev_runtime(), 1);
 function App() {
-  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(BrowserRouter, {
-    children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(Routes, {
+  return /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(BrowserRouter, {
+    children: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Routes, {
       children: [
-        /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(Route, {
+        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Route, {
           path: "/",
-          element: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(Checkout, {}, undefined, false, undefined, this)
+          element: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Checkout, {}, undefined, false, undefined, this)
         }, undefined, false, undefined, this),
-        /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(Route, {
+        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Route, {
           path: "/confirmation",
-          element: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(OrderConfirmation, {}, undefined, false, undefined, this)
+          element: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(OrderConfirmation, {}, undefined, false, undefined, this)
+        }, undefined, false, undefined, this),
+        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Route, {
+          path: "/store",
+          element: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Store, {}, undefined, false, undefined, this)
         }, undefined, false, undefined, this)
       ]
     }, undefined, true, undefined, this)
   }, undefined, false, undefined, this);
 }
 var root = import_client.createRoot(document.getElementById("root"));
-root.render(/* @__PURE__ */ jsx_dev_runtime3.jsxDEV(App, {}, undefined, false, undefined, this));
+root.render(/* @__PURE__ */ jsx_dev_runtime4.jsxDEV(App, {}, undefined, false, undefined, this));

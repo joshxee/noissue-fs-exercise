@@ -9,6 +9,7 @@ import type {
   ShippingAddress,
   ConfirmationState,
 } from '../types/api';
+import { appendSessionOrder } from '../lib/sessionOrders';
 
 const SHIPPING_COST = 50;
 
@@ -236,6 +237,7 @@ export default function Checkout() {
             purchaseOrders: json.data.purchaseOrders,
             shippingAddress,
           };
+          appendSessionOrder(json.data.purchaseOrders, shippingAddress);
           navigate('/confirmation', { state: confirmState });
         } else {
           setSubmitState({ status: 'error', message: json.error });
