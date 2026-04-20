@@ -3,7 +3,7 @@ import { drizzle } from 'drizzle-orm/bun-sqlite';
 import * as schema from './schema';
 
 // Use an in-memory SQLite database
-const sqlite = new Database(':memory:');
+export const sqlite = new Database(':memory:');
 
 // Initialize drizzle with the sqlite connection and the schema
 export const db = drizzle(sqlite, { schema });

@@ -11,8 +11,6 @@ import type {
 } from '../types/api';
 import { appendSessionOrder } from '../lib/sessionOrders';
 
-const SHIPPING_COST = 50;
-
 type FormState = {
   email: string;
   newsletter: boolean;
@@ -141,7 +139,7 @@ export default function Checkout() {
   const [submitState, setSubmitState] = React.useState<SubmitState>({ status: 'idle' });
   const [form, setForm] = React.useState<FormState>(INITIAL_FORM);
   const [touched, setTouched] = React.useState<TouchedFields>({});
-  const [shippingSelected, setShippingSelected] = React.useState(false);
+  const [shippingSelected, setShippingSelected] = React.useState(true);
   const [submitAttempted, setSubmitAttempted] = React.useState(false);
 
   React.useEffect(() => {
@@ -160,12 +158,6 @@ export default function Checkout() {
 
   const formErrors = React.useMemo(() => validateForm(form), [form]);
   const canSubmit = Object.keys(formErrors).length === 0 && shippingSelected;
-
-  const addressComplete =
-    form.address.trim().length > 0 &&
-    form.city.trim().length > 0 &&
-    form.zip.trim().length > 0 &&
-    form.country.length > 0;
 
   const handleField = React.useCallback(
     (field: keyof FormState) =>
@@ -217,6 +209,7 @@ export default function Checkout() {
     setSubmitState({ status: 'loading' });
     fetch('/api/checkout', { method: 'POST' })
       .then(res => {
+        if (res.status === 409) throw new Error('already_checked_out');
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         return res.json();
       })
@@ -243,13 +236,17 @@ export default function Checkout() {
           setSubmitState({ status: 'error', message: json.error });
         }
       })
-      .catch(() =>
-        setSubmitState({ status: 'error', message: 'Checkout failed. Please try again.' })
-      );
+      .catch((err: unknown) => {
+        const message = err instanceof Error && err.message === 'already_checked_out'
+          ? 'This order has already been placed. Please refresh to start a new cart.'
+          : 'Checkout failed. Please try again.';
+        setSubmitState({ status: 'error', message });
+      });
   };
 
   const subtotal = cartState.status === 'success' ? cartState.data.grandTotal : null;
-  const total = subtotal !== null ? subtotal + (shippingSelected ? SHIPPING_COST : 0) : null;
+  const shippingCost = cartState.status === 'success' ? cartState.data.shippingTotal : null;
+  const total = subtotal !== null && shippingCost !== null ? subtotal + (shippingSelected ? shippingCost : 0) : null;
   const symbol = cartState.status === 'success' ? cartState.data.symbol : '$';
   const currency = cartState.status === 'success' ? cartState.data.currency : 'NZD';
 
@@ -442,19 +439,7 @@ export default function Checkout() {
           {/* Shipping method */}
           <section className="bg-surface-container-low p-8 rounded-xl">
             <h2 className="font-headline text-2xl font-bold tracking-tight text-on-surface mb-6">Shipping method</h2>
-            {!addressComplete ? (
-              <div className="bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3">
-                <span className="material-symbols-outlined text-outline" data-icon="info">info</span>
-                Enter your shipping address to view available shipping methods.
-              </div>
-            ) : (
-              <label
-                className={`flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${
-                  shippingSelected
-                    ? 'border-primary bg-primary/5'
-                    : 'border-outline-variant/30 bg-surface hover:bg-surface-container-highest'
-                }`}
-              >
+            <label className="flex items-center gap-4 p-4 border rounded-lg border-primary bg-primary/5">
                 <input
                   type="radio"
                   name="shipping"
@@ -466,9 +451,10 @@ export default function Checkout() {
                   <div className="font-body text-on-surface font-medium">Standard Shipping</div>
                   <div className="font-body text-xs text-on-surface-variant mt-0.5">Estimated 3–5 business days</div>
                 </div>
-                <div className="font-label font-semibold text-on-surface">NZD $50.00</div>
+                <div className="font-label font-semibold text-on-surface">
+                  {shippingCost !== null ? `${currency} ${symbol}${shippingCost.toFixed(2)}` : '—'}
+                </div>
               </label>
-            )}
           </section>
 
           {/* Payment */}
@@ -682,7 +668,9 @@ export default function Checkout() {
               {shippingSelected && (
                 <div className="flex justify-between items-center font-body text-sm text-on-surface-variant">
                   <span>Shipping</span>
-                  <span className="font-label text-on-surface">{symbol}{SHIPPING_COST.toFixed(2)}</span>
+                  <span className="font-label text-on-surface">
+                    {shippingCost !== null ? `${symbol}${shippingCost.toFixed(2)}` : '—'}
+                  </span>
                 </div>
               )}
             </div>

@@ -314,3 +314,146 @@ The Pay Now button only becomes active when all of the above pass simultaneously
 - **State lost on refresh** — the confirmation page redirects to `/` if `location.state` is absent. A production implementation would persist orders by ID and expose `GET /api/orders/:id`.
 - **Single global cart** — there is no user session concept; the cart is fixed at server startup.
 - **Mock payment only** — credit card fields are validated client-side (Luhn, expiry, CVV format) but no payment gateway integration exists. Card data is never transmitted to the backend.
+
+---
+
+## Production Considerations
+
+This section describes how the exercise's design maps to production requirements and what would change in a real system.
+
+---
+
+### Authentication
+
+**Current system:** There is no authentication. The server is a single-user demo with no concept of identity. Any browser that reaches the server can read the cart and submit checkout.
+
+**Production approach:** Issue a session token (JWT or opaque session ID in an `HttpOnly` cookie) at login or on cart creation. Every API request carries this token; the server validates it before accessing cart or order data.
+
+Key decisions:
+- **Token issuance** — login endpoint or OAuth callback returns a short-lived access token (e.g. 15 min) + a long-lived refresh token stored server-side and rotated on use.
+- **Middleware** — an Elysia `derive` guard extracts and verifies the token before route handlers run; unauthenticated requests return `401`.
+- **CSRF** — because the frontend is a same-origin SPA, `SameSite=Strict` on the session cookie is sufficient. Cross-origin calls would additionally require a CSRF double-submit cookie.
+- **Guest checkout** — create an anonymous session ID on first cart interaction; upgrade it to a fully-authenticated record after the buyer provides an email.
+
+```
+POST /api/auth/login      → issues session cookie
+POST /api/auth/refresh    → rotates token pair
+DELETE /api/auth/logout   → revokes refresh token server-side
+GET  /api/orders          → requires valid session, scoped to that user
+```
+
+---
+
+### Multi-supplier orders
+
+**Current system:** Fully implemented. `processCheckout` groups cart items by `supplierId` into a `Map`, then creates exactly one `purchase_orders` row and N `purchase_order_items` rows per supplier in a single pass. Shipping is applied at the supplier level. The buyer sees one order reference (e.g. `#NI-0001-ECO`) while the database holds a discrete PO per supplier.
+
+**How the split works:**
+
+```
+Cart: 6 items across 4 suppliers
+         │
+         ▼
+Map<supplierId, CartItem[]>
+         │
+         ├── "1" → ACME Printing Co.   → PO #1 ($860)
+         ├── "2" → European Printing   → PO #2 ($54)
+         ├── "3" → AU 3PL Co.          → PO #3 ($610)
+         └── "4" → US 3PL Co.          → PO #4 ($360)
+```
+
+**Production additions:**
+- Wrap all `INSERT` statements in a single database transaction so a failure mid-way leaves no partial orders.
+- Add an idempotency key (e.g. a client-generated `checkoutToken`) stored alongside the order; duplicate submissions within a window return the existing result rather than inserting new rows.
+- Emit a `checkout.completed` domain event per PO so downstream services (fulfilment, supplier notification) can subscribe without coupling to the checkout service.
+
+---
+
+### Payment failures
+
+**Current system:** Payment is entirely mocked. The frontend validates card fields using Luhn, format checks, and expiry validation, but no data is transmitted to any payment gateway. `POST /api/checkout` succeeds unconditionally if the server is reachable.
+
+**Production approach:** Integrate a payment provider (e.g. Stripe) and handle failures at each stage:
+
+```
+1. Client collects card details
+      │  (Stripe.js — card data never touches our server)
+      ▼
+2. POST /api/checkout/intent
+      │  server creates a PaymentIntent via Stripe API
+      │  returns { clientSecret }
+      ▼
+3. Client calls stripe.confirmCardPayment(clientSecret)
+      │  Stripe handles 3DS, card network authorisation
+      ▼
+4. Stripe calls POST /api/webhooks/stripe  (HMAC-signed)
+      │  payment_intent.succeeded  → create purchase orders
+      │  payment_intent.failed     → mark intent failed, notify user
+      ▼
+5. Client polls GET /api/checkout/status/:intentId
+      └─ or receives a server-sent event / WebSocket push
+```
+
+Failure handling by stage:
+
+| Stage | Failure | Handling |
+|---|---|---|
+| Card authorisation | Card declined | Stripe returns decline code; surface user-friendly message; no order created |
+| Network to Stripe | Timeout / 5xx | Retry with exponential backoff (max 3 attempts); preserve cart on exhaustion |
+| Webhook delivery | Our server down | Stripe retries webhooks for 72 h; idempotency key prevents double-processing on replay |
+| Order creation after capture | DB error | Log the PaymentIntent ID; reconciliation job detects captured-but-unconfirmed intents and creates the order retroactively |
+| Partial fulfilment | One supplier unavailable | Full charge is taken; fulfilment system issues a per-supplier refund for unavailable items |
+
+The key invariant: **money only moves after the webhook confirms capture**. The `purchase_orders` row is only written inside the webhook handler, never inside the client-initiated checkout call.
+
+---
+
+### Database scaling — multiple users and multiple carts
+
+**Current system:** A single in-memory SQLite instance is created at process startup and seeded from `cart.json`. It is global and ephemeral. All visitors share the same cart; there is no user isolation and no data survives a restart.
+
+**Production approach:**
+
+**1. Schema additions**
+
+Add `users` and `carts` tables so each cart belongs to a user:
+
+```sql
+users(id, email, created_at)
+carts(id, user_id FK, status, created_at)   -- status: open | processing | checked_out | abandoned
+cart_items(id, cart_id FK, ...)             -- replaces global cart_items
+```
+
+`purchase_orders` gains a `cart_id` foreign key so orders are traceable to the cart that produced them.
+
+**2. Persistent database**
+
+Replace in-memory SQLite with PostgreSQL. Drizzle ORM supports PostgreSQL with near-identical schema syntax — the migration is primarily a driver swap (`bun:sqlite` → `drizzle-orm/node-postgres`). Add a connection pool (e.g. PgBouncer) to prevent connection exhaustion under concurrent load.
+
+**3. Checkout concurrency**
+
+Checkout reads and writes must be serialisable to prevent two concurrent requests from double-processing the same cart:
+
+```sql
+-- Optimistic lock: only one request transitions open → processing
+UPDATE carts SET status = 'processing'
+WHERE id = $cartId AND status = 'open'
+RETURNING id;
+-- 0 rows affected → cart already in flight → return 409 Conflict
+```
+
+Wrap the full checkout operation (status update → PO inserts → status → `checked_out`) in a single database transaction so partial writes are impossible.
+
+**4. Horizontal scaling**
+
+| Concern | Approach |
+|---|---|
+| Multiple server instances | Stateless handlers — session lives in DB + cookie, not process memory |
+| Read-heavy cart pages | Read replicas for `GET /api/cart`; writes go to primary |
+| Schema changes | Run Drizzle migrations before deploying new code; use backward-compatible column additions |
+
+**5. Data lifecycle**
+
+- **Abandoned carts** — a background job marks carts `abandoned` after N days of inactivity.
+- **Order history** — `GET /api/orders` returns all `purchase_orders` for the authenticated user, paginated.
+- **Audit trail** — an append-only `order_events` table records every state transition (created → processing → fulfilled → refunded) for support and compliance.
