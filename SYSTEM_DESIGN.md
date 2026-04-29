@@ -23,41 +23,30 @@ A full-stack ecommerce checkout flow that reads a static cart fixture, lets a us
 
 ## Architecture
 
-```
-┌─────────────────────────────────────────────────────┐
-│                    Browser                          │
-│                                                     │
-│  ┌──────────────┐    router state   ┌─────────────┐ │
-│  │ /checkout    │ ────────────────▶ │/confirmation│ │
-│  │              │  {purchaseOrders, │             │ │
-│  │ fetch cart   │   shippingAddr}   │ display POs │ │
-│  │ on mount     │                   │ from state  │ │
-│  └──────┬───────┘                   └─────────────┘ │
-│         │ fetch / POST                              │
-└─────────┼─────────────────────────────────────────--┘
-          │
-┌─────────▼───────────────────────────────────────────┐
-│                Elysia Server (:3000)                │
-│                                                     │
-│  GET  /api/cart      ──▶ cartRoute                  │
-│  POST /api/cart/random ──▶ cartRoute                │
-│  POST /api/checkout  ──▶ checkoutRoute              │
-│  GET  /dist/*        ──▶ static file plugin         │
-│  GET  /*             ──▶ index.html (SPA fallback)  │
-│                                                     │
-│  lifecycle: onAfterHandle logs {ts,method,path,     │
-│             status,durationMs} for /api/* requests  │
-│  lifecycle: onError logs {ts,method,path,error}     │
-│  startup: seedDatabase() reads cart.json → SQLite   │
-└─────────────────────────────────────────────────────┘
-          │
-┌─────────▼───────────────────────────────────────────┐
-│              In-Memory SQLite                       │
-│                                                     │
-│  suppliers · products · cart_items                  │
-│  shipping_fees · purchase_orders                    │
-│  purchase_order_items                               │
-└─────────────────────────────────────────────────────┘
+```mermaid
+graph TD
+    subgraph browser ["🌐 Browser Layer"]
+        A1["📍 /checkout<br/>fetch cart"] 
+        A2["📍 /confirmation<br/>display orders"]
+        A1 -->|router state| A2
+    end
+    
+    subgraph server ["⚙️ Elysia Server :3000"]
+        B1["📡 Routes<br/>GET /api/cart<br/>POST /api/checkout"]
+        B2["🔄 Lifecycle<br/>onAfterHandle<br/>onError<br/>seedDatabase"]
+    end
+    
+    subgraph db ["💾 In-Memory SQLite"]
+        C1["suppliers<br/>products<br/>cart_items<br/>shipping_fees<br/>purchase_orders"]
+    end
+    
+    A1 -->|GET/POST| B1
+    B1 --> B2
+    B1 --> C1
+    
+    style browser fill:#e1f5ff,stroke:#01579b,stroke-width:2px
+    style server fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style db fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
 ```
 
 The server serves the compiled frontend bundle from `public/dist/` via `@elysiajs/static`. React Router handles client-side routing; unknown paths fall through to `index.html`.
@@ -397,16 +386,24 @@ GET  /api/orders          → requires valid session, scoped to that user
 
 **How the split works:**
 
-```
-Cart: 6 items across 4 suppliers
-         │
-         ▼
-Map<supplierId, CartItem[]>
-         │
-         ├── "1" → ACME Printing Co.   → PO #1 ($860)
-         ├── "2" → European Printing   → PO #2 ($54)
-         ├── "3" → AU 3PL Co.          → PO #3 ($610)
-         └── "4" → US 3PL Co.          → PO #4 ($360)
+```mermaid
+graph TD
+    Cart["🛒 6 items<br/>4 suppliers"]
+    Map["🗂️ Group by<br/>supplierId"]
+    
+    Cart --> Map
+    
+    Map --> PO1["ACME<br/>PO #1<br/>$860"]
+    Map --> PO2["European<br/>PO #2<br/>$54"]
+    Map --> PO3["AU 3PL<br/>PO #3<br/>$610"]
+    Map --> PO4["US 3PL<br/>PO #4<br/>$360"]
+    
+    style Cart fill:#fff3e0,stroke:#f57f17
+    style Map fill:#e1f5ff,stroke:#01579b
+    style PO1 fill:#e8f5e9,stroke:#1b5e20
+    style PO2 fill:#e8f5e9,stroke:#1b5e20
+    style PO3 fill:#e8f5e9,stroke:#1b5e20
+    style PO4 fill:#e8f5e9,stroke:#1b5e20
 ```
 
 **Production additions:**
@@ -422,23 +419,41 @@ Map<supplierId, CartItem[]>
 
 **Production approach:** Integrate a payment provider (e.g. Stripe) and handle failures at each stage:
 
-```
-1. Client collects card details
-      │  (Stripe.js — card data never touches our server)
-      ▼
-2. POST /api/checkout/intent
-      │  server creates a PaymentIntent via Stripe API
-      │  returns { clientSecret }
-      ▼
-3. Client calls stripe.confirmCardPayment(clientSecret)
-      │  Stripe handles 3DS, card network authorisation
-      ▼
-4. Stripe calls POST /api/webhooks/stripe  (HMAC-signed)
-      │  payment_intent.succeeded  → create purchase orders
-      │  payment_intent.failed     → mark intent failed, notify user
-      ▼
-5. Client polls GET /api/checkout/status/:intentId
-      └─ or receives a server-sent event / WebSocket push
+```mermaid
+graph TD
+    subgraph client ["🖥️ Client Side"]
+        A["1️⃣ Collect card<br/>via Stripe.js"]
+        C["3️⃣ Confirm payment<br/>with Stripe"]
+        F["5️⃣ Poll for status<br/>or receive event"]
+    end
+    
+    subgraph server ["⚙️ Server Side"]
+        B["2️⃣ Create<br/>PaymentIntent"]
+        E["4️⃣ Receive webhook<br/>from Stripe"]
+    end
+    
+    subgraph stripe ["💳 Stripe"]
+        D{"Authorization<br/>& 3DS"}
+    end
+    
+    subgraph result ["Result"]
+        E1["✅ Success<br/>→ Create orders"]
+        E2["❌ Failed<br/>→ Notify user"]
+    end
+    
+    A --> B
+    B --> C
+    C --> D
+    D -->|Valid| E
+    D -->|Declined| E2
+    E --> E1
+    E2 --> F
+    E1 --> F
+    
+    style client fill:#e3f2fd,stroke:#01579b,stroke-width:2px
+    style server fill:#fff3e0,stroke:#e65100,stroke-width:2px
+    style stripe fill:#f3e5f5,stroke:#6a1b9a,stroke-width:2px
+    style result fill:#e8f5e9,stroke:#1b5e20,stroke-width:2px
 ```
 
 Failure handling by stage:

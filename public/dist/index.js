@@ -3,281 +3,32 @@ var __getProtoOf = Object.getPrototypeOf;
 var __defProp = Object.defineProperty;
 var __getOwnPropNames = Object.getOwnPropertyNames;
 var __hasOwnProp = Object.prototype.hasOwnProperty;
+function __accessProp(key) {
+  return this[key];
+}
+var __toESMCache_node;
+var __toESMCache_esm;
 var __toESM = (mod, isNodeMode, target) => {
+  var canCache = mod != null && typeof mod === "object";
+  if (canCache) {
+    var cache = isNodeMode ? __toESMCache_node ??= new WeakMap : __toESMCache_esm ??= new WeakMap;
+    var cached = cache.get(mod);
+    if (cached)
+      return cached;
+  }
   target = mod != null ? __create(__getProtoOf(mod)) : {};
   const to = isNodeMode || !mod || !mod.__esModule ? __defProp(target, "default", { value: mod, enumerable: true }) : target;
   for (let key of __getOwnPropNames(mod))
     if (!__hasOwnProp.call(to, key))
       __defProp(to, key, {
-        get: () => mod[key],
+        get: __accessProp.bind(mod, key),
         enumerable: true
       });
+  if (canCache)
+    cache.set(mod, to);
   return to;
 };
 var __commonJS = (cb, mod) => () => (mod || cb((mod = { exports: {} }).exports, mod), mod.exports);
-
-// node_modules/scheduler/cjs/scheduler.development.js
-var require_scheduler_development = __commonJS((exports) => {
-  (function() {
-    function performWorkUntilDeadline() {
-      needsPaint = false;
-      if (isMessageLoopRunning) {
-        var currentTime = exports.unstable_now();
-        startTime = currentTime;
-        var hasMoreWork = true;
-        try {
-          a: {
-            isHostCallbackScheduled = false;
-            isHostTimeoutScheduled && (isHostTimeoutScheduled = false, localClearTimeout(taskTimeoutID), taskTimeoutID = -1);
-            isPerformingWork = true;
-            var previousPriorityLevel = currentPriorityLevel;
-            try {
-              b: {
-                advanceTimers(currentTime);
-                for (currentTask = peek(taskQueue);currentTask !== null && !(currentTask.expirationTime > currentTime && shouldYieldToHost()); ) {
-                  var callback = currentTask.callback;
-                  if (typeof callback === "function") {
-                    currentTask.callback = null;
-                    currentPriorityLevel = currentTask.priorityLevel;
-                    var continuationCallback = callback(currentTask.expirationTime <= currentTime);
-                    currentTime = exports.unstable_now();
-                    if (typeof continuationCallback === "function") {
-                      currentTask.callback = continuationCallback;
-                      advanceTimers(currentTime);
-                      hasMoreWork = true;
-                      break b;
-                    }
-                    currentTask === peek(taskQueue) && pop(taskQueue);
-                    advanceTimers(currentTime);
-                  } else
-                    pop(taskQueue);
-                  currentTask = peek(taskQueue);
-                }
-                if (currentTask !== null)
-                  hasMoreWork = true;
-                else {
-                  var firstTimer = peek(timerQueue);
-                  firstTimer !== null && requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
-                  hasMoreWork = false;
-                }
-              }
-              break a;
-            } finally {
-              currentTask = null, currentPriorityLevel = previousPriorityLevel, isPerformingWork = false;
-            }
-            hasMoreWork = undefined;
-          }
-        } finally {
-          hasMoreWork ? schedulePerformWorkUntilDeadline() : isMessageLoopRunning = false;
-        }
-      }
-    }
-    function push(heap, node) {
-      var index = heap.length;
-      heap.push(node);
-      a:
-        for (;0 < index; ) {
-          var parentIndex = index - 1 >>> 1, parent = heap[parentIndex];
-          if (0 < compare(parent, node))
-            heap[parentIndex] = node, heap[index] = parent, index = parentIndex;
-          else
-            break a;
-        }
-    }
-    function peek(heap) {
-      return heap.length === 0 ? null : heap[0];
-    }
-    function pop(heap) {
-      if (heap.length === 0)
-        return null;
-      var first = heap[0], last = heap.pop();
-      if (last !== first) {
-        heap[0] = last;
-        a:
-          for (var index = 0, length = heap.length, halfLength = length >>> 1;index < halfLength; ) {
-            var leftIndex = 2 * (index + 1) - 1, left = heap[leftIndex], rightIndex = leftIndex + 1, right = heap[rightIndex];
-            if (0 > compare(left, last))
-              rightIndex < length && 0 > compare(right, left) ? (heap[index] = right, heap[rightIndex] = last, index = rightIndex) : (heap[index] = left, heap[leftIndex] = last, index = leftIndex);
-            else if (rightIndex < length && 0 > compare(right, last))
-              heap[index] = right, heap[rightIndex] = last, index = rightIndex;
-            else
-              break a;
-          }
-      }
-      return first;
-    }
-    function compare(a, b) {
-      var diff = a.sortIndex - b.sortIndex;
-      return diff !== 0 ? diff : a.id - b.id;
-    }
-    function advanceTimers(currentTime) {
-      for (var timer = peek(timerQueue);timer !== null; ) {
-        if (timer.callback === null)
-          pop(timerQueue);
-        else if (timer.startTime <= currentTime)
-          pop(timerQueue), timer.sortIndex = timer.expirationTime, push(taskQueue, timer);
-        else
-          break;
-        timer = peek(timerQueue);
-      }
-    }
-    function handleTimeout(currentTime) {
-      isHostTimeoutScheduled = false;
-      advanceTimers(currentTime);
-      if (!isHostCallbackScheduled)
-        if (peek(taskQueue) !== null)
-          isHostCallbackScheduled = true, isMessageLoopRunning || (isMessageLoopRunning = true, schedulePerformWorkUntilDeadline());
-        else {
-          var firstTimer = peek(timerQueue);
-          firstTimer !== null && requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
-        }
-    }
-    function shouldYieldToHost() {
-      return needsPaint ? true : exports.unstable_now() - startTime < frameInterval ? false : true;
-    }
-    function requestHostTimeout(callback, ms) {
-      taskTimeoutID = localSetTimeout(function() {
-        callback(exports.unstable_now());
-      }, ms);
-    }
-    typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function" && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(Error());
-    exports.unstable_now = undefined;
-    if (typeof performance === "object" && typeof performance.now === "function") {
-      var localPerformance = performance;
-      exports.unstable_now = function() {
-        return localPerformance.now();
-      };
-    } else {
-      var localDate = Date, initialTime = localDate.now();
-      exports.unstable_now = function() {
-        return localDate.now() - initialTime;
-      };
-    }
-    var taskQueue = [], timerQueue = [], taskIdCounter = 1, currentTask = null, currentPriorityLevel = 3, isPerformingWork = false, isHostCallbackScheduled = false, isHostTimeoutScheduled = false, needsPaint = false, localSetTimeout = typeof setTimeout === "function" ? setTimeout : null, localClearTimeout = typeof clearTimeout === "function" ? clearTimeout : null, localSetImmediate = typeof setImmediate !== "undefined" ? setImmediate : null, isMessageLoopRunning = false, taskTimeoutID = -1, frameInterval = 5, startTime = -1;
-    if (typeof localSetImmediate === "function")
-      var schedulePerformWorkUntilDeadline = function() {
-        localSetImmediate(performWorkUntilDeadline);
-      };
-    else if (typeof MessageChannel !== "undefined") {
-      var channel = new MessageChannel, port = channel.port2;
-      channel.port1.onmessage = performWorkUntilDeadline;
-      schedulePerformWorkUntilDeadline = function() {
-        port.postMessage(null);
-      };
-    } else
-      schedulePerformWorkUntilDeadline = function() {
-        localSetTimeout(performWorkUntilDeadline, 0);
-      };
-    exports.unstable_IdlePriority = 5;
-    exports.unstable_ImmediatePriority = 1;
-    exports.unstable_LowPriority = 4;
-    exports.unstable_NormalPriority = 3;
-    exports.unstable_Profiling = null;
-    exports.unstable_UserBlockingPriority = 2;
-    exports.unstable_cancelCallback = function(task) {
-      task.callback = null;
-    };
-    exports.unstable_forceFrameRate = function(fps) {
-      0 > fps || 125 < fps ? console.error("forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher than 125 fps is not supported") : frameInterval = 0 < fps ? Math.floor(1000 / fps) : 5;
-    };
-    exports.unstable_getCurrentPriorityLevel = function() {
-      return currentPriorityLevel;
-    };
-    exports.unstable_next = function(eventHandler) {
-      switch (currentPriorityLevel) {
-        case 1:
-        case 2:
-        case 3:
-          var priorityLevel = 3;
-          break;
-        default:
-          priorityLevel = currentPriorityLevel;
-      }
-      var previousPriorityLevel = currentPriorityLevel;
-      currentPriorityLevel = priorityLevel;
-      try {
-        return eventHandler();
-      } finally {
-        currentPriorityLevel = previousPriorityLevel;
-      }
-    };
-    exports.unstable_requestPaint = function() {
-      needsPaint = true;
-    };
-    exports.unstable_runWithPriority = function(priorityLevel, eventHandler) {
-      switch (priorityLevel) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-          break;
-        default:
-          priorityLevel = 3;
-      }
-      var previousPriorityLevel = currentPriorityLevel;
-      currentPriorityLevel = priorityLevel;
-      try {
-        return eventHandler();
-      } finally {
-        currentPriorityLevel = previousPriorityLevel;
-      }
-    };
-    exports.unstable_scheduleCallback = function(priorityLevel, callback, options) {
-      var currentTime = exports.unstable_now();
-      typeof options === "object" && options !== null ? (options = options.delay, options = typeof options === "number" && 0 < options ? currentTime + options : currentTime) : options = currentTime;
-      switch (priorityLevel) {
-        case 1:
-          var timeout = -1;
-          break;
-        case 2:
-          timeout = 250;
-          break;
-        case 5:
-          timeout = 1073741823;
-          break;
-        case 4:
-          timeout = 1e4;
-          break;
-        default:
-          timeout = 5000;
-      }
-      timeout = options + timeout;
-      priorityLevel = {
-        id: taskIdCounter++,
-        callback,
-        priorityLevel,
-        startTime: options,
-        expirationTime: timeout,
-        sortIndex: -1
-      };
-      options > currentTime ? (priorityLevel.sortIndex = options, push(timerQueue, priorityLevel), peek(taskQueue) === null && priorityLevel === peek(timerQueue) && (isHostTimeoutScheduled ? (localClearTimeout(taskTimeoutID), taskTimeoutID = -1) : isHostTimeoutScheduled = true, requestHostTimeout(handleTimeout, options - currentTime))) : (priorityLevel.sortIndex = timeout, push(taskQueue, priorityLevel), isHostCallbackScheduled || isPerformingWork || (isHostCallbackScheduled = true, isMessageLoopRunning || (isMessageLoopRunning = true, schedulePerformWorkUntilDeadline())));
-      return priorityLevel;
-    };
-    exports.unstable_shouldYield = shouldYieldToHost;
-    exports.unstable_wrapCallback = function(callback) {
-      var parentPriorityLevel = currentPriorityLevel;
-      return function() {
-        var previousPriorityLevel = currentPriorityLevel;
-        currentPriorityLevel = parentPriorityLevel;
-        try {
-          return callback.apply(this, arguments);
-        } finally {
-          currentPriorityLevel = previousPriorityLevel;
-        }
-      };
-    };
-    typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop === "function" && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop(Error());
-  })();
-});
-
-// node_modules/scheduler/index.js
-var require_scheduler = __commonJS((exports, module) => {
-  var scheduler_development = __toESM(require_scheduler_development(), 1);
-  if (false) {} else {
-    module.exports = scheduler_development;
-  }
-});
 
 // node_modules/react/cjs/react.development.js
 var require_react_development = __commonJS((exports, module) => {
@@ -1104,15 +855,278 @@ See https://react.dev/link/invalid-hook-call for tips about how to debug and fix
 
 // node_modules/react/index.js
 var require_react = __commonJS((exports, module) => {
-  var react_development = __toESM(require_react_development(), 1);
+  var react_development = __toESM(require_react_development());
   if (false) {} else {
     module.exports = react_development;
   }
 });
 
+// node_modules/scheduler/cjs/scheduler.development.js
+var require_scheduler_development = __commonJS((exports) => {
+  (function() {
+    function performWorkUntilDeadline() {
+      needsPaint = false;
+      if (isMessageLoopRunning) {
+        var currentTime = exports.unstable_now();
+        startTime = currentTime;
+        var hasMoreWork = true;
+        try {
+          a: {
+            isHostCallbackScheduled = false;
+            isHostTimeoutScheduled && (isHostTimeoutScheduled = false, localClearTimeout(taskTimeoutID), taskTimeoutID = -1);
+            isPerformingWork = true;
+            var previousPriorityLevel = currentPriorityLevel;
+            try {
+              b: {
+                advanceTimers(currentTime);
+                for (currentTask = peek(taskQueue);currentTask !== null && !(currentTask.expirationTime > currentTime && shouldYieldToHost()); ) {
+                  var callback = currentTask.callback;
+                  if (typeof callback === "function") {
+                    currentTask.callback = null;
+                    currentPriorityLevel = currentTask.priorityLevel;
+                    var continuationCallback = callback(currentTask.expirationTime <= currentTime);
+                    currentTime = exports.unstable_now();
+                    if (typeof continuationCallback === "function") {
+                      currentTask.callback = continuationCallback;
+                      advanceTimers(currentTime);
+                      hasMoreWork = true;
+                      break b;
+                    }
+                    currentTask === peek(taskQueue) && pop(taskQueue);
+                    advanceTimers(currentTime);
+                  } else
+                    pop(taskQueue);
+                  currentTask = peek(taskQueue);
+                }
+                if (currentTask !== null)
+                  hasMoreWork = true;
+                else {
+                  var firstTimer = peek(timerQueue);
+                  firstTimer !== null && requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
+                  hasMoreWork = false;
+                }
+              }
+              break a;
+            } finally {
+              currentTask = null, currentPriorityLevel = previousPriorityLevel, isPerformingWork = false;
+            }
+            hasMoreWork = undefined;
+          }
+        } finally {
+          hasMoreWork ? schedulePerformWorkUntilDeadline() : isMessageLoopRunning = false;
+        }
+      }
+    }
+    function push(heap, node) {
+      var index = heap.length;
+      heap.push(node);
+      a:
+        for (;0 < index; ) {
+          var parentIndex = index - 1 >>> 1, parent = heap[parentIndex];
+          if (0 < compare(parent, node))
+            heap[parentIndex] = node, heap[index] = parent, index = parentIndex;
+          else
+            break a;
+        }
+    }
+    function peek(heap) {
+      return heap.length === 0 ? null : heap[0];
+    }
+    function pop(heap) {
+      if (heap.length === 0)
+        return null;
+      var first = heap[0], last = heap.pop();
+      if (last !== first) {
+        heap[0] = last;
+        a:
+          for (var index = 0, length = heap.length, halfLength = length >>> 1;index < halfLength; ) {
+            var leftIndex = 2 * (index + 1) - 1, left = heap[leftIndex], rightIndex = leftIndex + 1, right = heap[rightIndex];
+            if (0 > compare(left, last))
+              rightIndex < length && 0 > compare(right, left) ? (heap[index] = right, heap[rightIndex] = last, index = rightIndex) : (heap[index] = left, heap[leftIndex] = last, index = leftIndex);
+            else if (rightIndex < length && 0 > compare(right, last))
+              heap[index] = right, heap[rightIndex] = last, index = rightIndex;
+            else
+              break a;
+          }
+      }
+      return first;
+    }
+    function compare(a, b) {
+      var diff = a.sortIndex - b.sortIndex;
+      return diff !== 0 ? diff : a.id - b.id;
+    }
+    function advanceTimers(currentTime) {
+      for (var timer = peek(timerQueue);timer !== null; ) {
+        if (timer.callback === null)
+          pop(timerQueue);
+        else if (timer.startTime <= currentTime)
+          pop(timerQueue), timer.sortIndex = timer.expirationTime, push(taskQueue, timer);
+        else
+          break;
+        timer = peek(timerQueue);
+      }
+    }
+    function handleTimeout(currentTime) {
+      isHostTimeoutScheduled = false;
+      advanceTimers(currentTime);
+      if (!isHostCallbackScheduled)
+        if (peek(taskQueue) !== null)
+          isHostCallbackScheduled = true, isMessageLoopRunning || (isMessageLoopRunning = true, schedulePerformWorkUntilDeadline());
+        else {
+          var firstTimer = peek(timerQueue);
+          firstTimer !== null && requestHostTimeout(handleTimeout, firstTimer.startTime - currentTime);
+        }
+    }
+    function shouldYieldToHost() {
+      return needsPaint ? true : exports.unstable_now() - startTime < frameInterval ? false : true;
+    }
+    function requestHostTimeout(callback, ms) {
+      taskTimeoutID = localSetTimeout(function() {
+        callback(exports.unstable_now());
+      }, ms);
+    }
+    typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart === "function" && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStart(Error());
+    exports.unstable_now = undefined;
+    if (typeof performance === "object" && typeof performance.now === "function") {
+      var localPerformance = performance;
+      exports.unstable_now = function() {
+        return localPerformance.now();
+      };
+    } else {
+      var localDate = Date, initialTime = localDate.now();
+      exports.unstable_now = function() {
+        return localDate.now() - initialTime;
+      };
+    }
+    var taskQueue = [], timerQueue = [], taskIdCounter = 1, currentTask = null, currentPriorityLevel = 3, isPerformingWork = false, isHostCallbackScheduled = false, isHostTimeoutScheduled = false, needsPaint = false, localSetTimeout = typeof setTimeout === "function" ? setTimeout : null, localClearTimeout = typeof clearTimeout === "function" ? clearTimeout : null, localSetImmediate = typeof setImmediate !== "undefined" ? setImmediate : null, isMessageLoopRunning = false, taskTimeoutID = -1, frameInterval = 5, startTime = -1;
+    if (typeof localSetImmediate === "function")
+      var schedulePerformWorkUntilDeadline = function() {
+        localSetImmediate(performWorkUntilDeadline);
+      };
+    else if (typeof MessageChannel !== "undefined") {
+      var channel = new MessageChannel, port = channel.port2;
+      channel.port1.onmessage = performWorkUntilDeadline;
+      schedulePerformWorkUntilDeadline = function() {
+        port.postMessage(null);
+      };
+    } else
+      schedulePerformWorkUntilDeadline = function() {
+        localSetTimeout(performWorkUntilDeadline, 0);
+      };
+    exports.unstable_IdlePriority = 5;
+    exports.unstable_ImmediatePriority = 1;
+    exports.unstable_LowPriority = 4;
+    exports.unstable_NormalPriority = 3;
+    exports.unstable_Profiling = null;
+    exports.unstable_UserBlockingPriority = 2;
+    exports.unstable_cancelCallback = function(task) {
+      task.callback = null;
+    };
+    exports.unstable_forceFrameRate = function(fps) {
+      0 > fps || 125 < fps ? console.error("forceFrameRate takes a positive int between 0 and 125, forcing frame rates higher than 125 fps is not supported") : frameInterval = 0 < fps ? Math.floor(1000 / fps) : 5;
+    };
+    exports.unstable_getCurrentPriorityLevel = function() {
+      return currentPriorityLevel;
+    };
+    exports.unstable_next = function(eventHandler) {
+      switch (currentPriorityLevel) {
+        case 1:
+        case 2:
+        case 3:
+          var priorityLevel = 3;
+          break;
+        default:
+          priorityLevel = currentPriorityLevel;
+      }
+      var previousPriorityLevel = currentPriorityLevel;
+      currentPriorityLevel = priorityLevel;
+      try {
+        return eventHandler();
+      } finally {
+        currentPriorityLevel = previousPriorityLevel;
+      }
+    };
+    exports.unstable_requestPaint = function() {
+      needsPaint = true;
+    };
+    exports.unstable_runWithPriority = function(priorityLevel, eventHandler) {
+      switch (priorityLevel) {
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+        case 5:
+          break;
+        default:
+          priorityLevel = 3;
+      }
+      var previousPriorityLevel = currentPriorityLevel;
+      currentPriorityLevel = priorityLevel;
+      try {
+        return eventHandler();
+      } finally {
+        currentPriorityLevel = previousPriorityLevel;
+      }
+    };
+    exports.unstable_scheduleCallback = function(priorityLevel, callback, options) {
+      var currentTime = exports.unstable_now();
+      typeof options === "object" && options !== null ? (options = options.delay, options = typeof options === "number" && 0 < options ? currentTime + options : currentTime) : options = currentTime;
+      switch (priorityLevel) {
+        case 1:
+          var timeout = -1;
+          break;
+        case 2:
+          timeout = 250;
+          break;
+        case 5:
+          timeout = 1073741823;
+          break;
+        case 4:
+          timeout = 1e4;
+          break;
+        default:
+          timeout = 5000;
+      }
+      timeout = options + timeout;
+      priorityLevel = {
+        id: taskIdCounter++,
+        callback,
+        priorityLevel,
+        startTime: options,
+        expirationTime: timeout,
+        sortIndex: -1
+      };
+      options > currentTime ? (priorityLevel.sortIndex = options, push(timerQueue, priorityLevel), peek(taskQueue) === null && priorityLevel === peek(timerQueue) && (isHostTimeoutScheduled ? (localClearTimeout(taskTimeoutID), taskTimeoutID = -1) : isHostTimeoutScheduled = true, requestHostTimeout(handleTimeout, options - currentTime))) : (priorityLevel.sortIndex = timeout, push(taskQueue, priorityLevel), isHostCallbackScheduled || isPerformingWork || (isHostCallbackScheduled = true, isMessageLoopRunning || (isMessageLoopRunning = true, schedulePerformWorkUntilDeadline())));
+      return priorityLevel;
+    };
+    exports.unstable_shouldYield = shouldYieldToHost;
+    exports.unstable_wrapCallback = function(callback) {
+      var parentPriorityLevel = currentPriorityLevel;
+      return function() {
+        var previousPriorityLevel = currentPriorityLevel;
+        currentPriorityLevel = parentPriorityLevel;
+        try {
+          return callback.apply(this, arguments);
+        } finally {
+          currentPriorityLevel = previousPriorityLevel;
+        }
+      };
+    };
+    typeof __REACT_DEVTOOLS_GLOBAL_HOOK__ !== "undefined" && typeof __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop === "function" && __REACT_DEVTOOLS_GLOBAL_HOOK__.registerInternalModuleStop(Error());
+  })();
+});
+
+// node_modules/scheduler/index.js
+var require_scheduler = __commonJS((exports, module) => {
+  var scheduler_development = __toESM(require_scheduler_development());
+  if (false) {} else {
+    module.exports = scheduler_development;
+  }
+});
+
 // node_modules/react-dom/cjs/react-dom.development.js
 var require_react_dom_development = __commonJS((exports) => {
-  var React = __toESM(require_react(), 1);
+  var React = __toESM(require_react());
   (function() {
     function noop() {}
     function testStringCoercion(value) {
@@ -1295,7 +1309,7 @@ See https://react.dev/link/invalid-hook-call for tips about how to debug and fix
 
 // node_modules/react-dom/index.js
 var require_react_dom = __commonJS((exports, module) => {
-  var react_dom_development = __toESM(require_react_dom_development(), 1);
+  var react_dom_development = __toESM(require_react_dom_development());
   if (false) {} else {
     module.exports = react_dom_development;
   }
@@ -1303,9 +1317,9 @@ var require_react_dom = __commonJS((exports, module) => {
 
 // node_modules/react-dom/cjs/react-dom-client.development.js
 var require_react_dom_client_development = __commonJS((exports) => {
-  var Scheduler = __toESM(require_scheduler(), 1);
-  var React = __toESM(require_react(), 1);
-  var ReactDOM = __toESM(require_react_dom(), 1);
+  var Scheduler = __toESM(require_scheduler());
+  var React = __toESM(require_react());
+  var ReactDOM = __toESM(require_react_dom());
   (function() {
     function findHook(fiber, id) {
       for (fiber = fiber.memoizedState;fiber !== null && 0 < id; )
@@ -16871,7 +16885,7 @@ You might need to use a local HTTP server (instead of file://): https://react.de
 
 // node_modules/react-dom/client.js
 var require_client = __commonJS((exports, module) => {
-  var react_dom_client_development = __toESM(require_react_dom_client_development(), 1);
+  var react_dom_client_development = __toESM(require_react_dom_client_development());
   if (false) {} else {
     module.exports = react_dom_client_development;
   }
@@ -16879,7 +16893,7 @@ var require_client = __commonJS((exports, module) => {
 
 // node_modules/react/cjs/react-jsx-dev-runtime.development.js
 var require_react_jsx_dev_runtime_development = __commonJS((exports) => {
-  var React12 = __toESM(require_react(), 1);
+  var React13 = __toESM(require_react());
   (function() {
     function getComponentNameFromType(type) {
       if (type == null)
@@ -17071,17 +17085,17 @@ React keys must be passed directly to JSX without using spread:
     function isValidElement2(object) {
       return typeof object === "object" && object !== null && object.$$typeof === REACT_ELEMENT_TYPE;
     }
-    var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React12.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
+    var REACT_ELEMENT_TYPE = Symbol.for("react.transitional.element"), REACT_PORTAL_TYPE = Symbol.for("react.portal"), REACT_FRAGMENT_TYPE = Symbol.for("react.fragment"), REACT_STRICT_MODE_TYPE = Symbol.for("react.strict_mode"), REACT_PROFILER_TYPE = Symbol.for("react.profiler"), REACT_CONSUMER_TYPE = Symbol.for("react.consumer"), REACT_CONTEXT_TYPE = Symbol.for("react.context"), REACT_FORWARD_REF_TYPE = Symbol.for("react.forward_ref"), REACT_SUSPENSE_TYPE = Symbol.for("react.suspense"), REACT_SUSPENSE_LIST_TYPE = Symbol.for("react.suspense_list"), REACT_MEMO_TYPE = Symbol.for("react.memo"), REACT_LAZY_TYPE = Symbol.for("react.lazy"), REACT_ACTIVITY_TYPE = Symbol.for("react.activity"), REACT_CLIENT_REFERENCE = Symbol.for("react.client.reference"), ReactSharedInternals = React13.__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE, hasOwnProperty = Object.prototype.hasOwnProperty, isArrayImpl = Array.isArray, createTask = console.createTask ? console.createTask : function() {
       return null;
     };
-    React12 = {
+    React13 = {
       react_stack_bottom_frame: function(callStackForError) {
         return callStackForError();
       }
     };
     var specialPropKeyWarningShown;
     var didWarnAboutElementRef = {};
-    var unknownOwnerDebugStack = React12.react_stack_bottom_frame.bind(React12, UnknownOwner)();
+    var unknownOwnerDebugStack = React13.react_stack_bottom_frame.bind(React13, UnknownOwner)();
     var unknownOwnerDebugTask = createTask(getTaskName(UnknownOwner));
     var didWarnAboutKeySpread = {};
     exports.Fragment = REACT_FRAGMENT_TYPE;
@@ -17094,13 +17108,14 @@ React keys must be passed directly to JSX without using spread:
 
 // node_modules/react/jsx-dev-runtime.js
 var require_jsx_dev_runtime = __commonJS((exports, module) => {
-  var react_jsx_dev_runtime_development = __toESM(require_react_jsx_dev_runtime_development(), 1);
+  var react_jsx_dev_runtime_development = __toESM(require_react_jsx_dev_runtime_development());
   if (false) {} else {
     module.exports = react_jsx_dev_runtime_development;
   }
 });
 
 // public/index.tsx
+var import_react4 = __toESM(require_react(), 1);
 var import_client = __toESM(require_client(), 1);
 
 // node_modules/react-router/dist/development/chunk-OE4NN4TA.mjs
@@ -19303,8 +19318,28 @@ function useViewTransitionState(to, { relative } = {}) {
 // node_modules/react-router/dist/development/index.mjs
 "use client";
 
-// public/pages/Checkout.tsx
+// public/pages/checkout/useCart.ts
 var import_react = __toESM(require_react(), 1);
+function useCart() {
+  const [cartState, setCartState] = import_react.default.useState({ status: "idle" });
+  import_react.default.useEffect(() => {
+    setCartState({ status: "loading" });
+    fetch("/api/cart").then((res) => {
+      if (!res.ok)
+        throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    }).then((json) => {
+      if (json.success)
+        setCartState({ status: "success", data: json.data });
+      else
+        setCartState({ status: "error", message: json.error.message });
+    }).catch(() => setCartState({ status: "error", message: "Unable to load cart" }));
+  }, []);
+  return cartState;
+}
+
+// public/pages/checkout/useCheckoutForm.ts
+var import_react2 = __toESM(require_react(), 1);
 
 // public/lib/sessionOrders.ts
 var SESSION_KEY = "noissue_session_orders";
@@ -19334,9 +19369,7 @@ function appendSessionOrder(purchaseOrders, shippingAddress) {
   return updated;
 }
 
-// public/pages/Checkout.tsx
-var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
-var SHIPPING_COST = 50;
+// public/pages/checkout/useCheckoutForm.ts
 var INITIAL_FORM = {
   email: "",
   newsletter: false,
@@ -19383,9 +19416,8 @@ function validateForm(form) {
   } else if (rawCard.length !== 16 || !luhnCheck(rawCard)) {
     errors.cardNumber = "Enter a valid card number";
   }
-  if (!form.cardName.trim()) {
+  if (!form.cardName.trim())
     errors.cardName = "Cardholder name is required";
-  }
   if (!form.cardExpiry) {
     errors.cardExpiry = "Expiry date is required";
   } else {
@@ -19409,46 +19441,29 @@ function validateForm(form) {
   }
   return errors;
 }
-var LABEL_CLASS = "absolute left-0 -top-4 text-xs text-outline font-label pointer-events-none " + "peer-placeholder-shown:top-3 peer-placeholder-shown:text-base " + "peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary " + "transition-all duration-200";
-var INPUT_CLASS = "w-full bg-transparent border-0 border-b border-outline-variant/20 " + "focus:border-primary focus:ring-0 text-on-surface px-0 py-3 " + "peer transition-colors placeholder-transparent";
-function Checkout() {
+function useCheckoutForm() {
   const navigate = useNavigate();
-  const [cartState, setCartState] = import_react.default.useState({ status: "idle" });
-  const [submitState, setSubmitState] = import_react.default.useState({ status: "idle" });
-  const [form, setForm] = import_react.default.useState(INITIAL_FORM);
-  const [touched, setTouched] = import_react.default.useState({});
-  const [shippingSelected, setShippingSelected] = import_react.default.useState(false);
-  const [submitAttempted, setSubmitAttempted] = import_react.default.useState(false);
-  import_react.default.useEffect(() => {
-    setCartState({ status: "loading" });
-    fetch("/api/cart").then((res) => {
-      if (!res.ok)
-        throw new Error(`HTTP ${res.status}`);
-      return res.json();
-    }).then((json) => {
-      if (json.success)
-        setCartState({ status: "success", data: json.data });
-      else
-        setCartState({ status: "error", message: json.error });
-    }).catch(() => setCartState({ status: "error", message: "Unable to load cart" }));
-  }, []);
-  const formErrors = import_react.default.useMemo(() => validateForm(form), [form]);
+  const [form, setForm] = import_react2.default.useState(INITIAL_FORM);
+  const [touched, setTouched] = import_react2.default.useState({});
+  const [submitState, setSubmitState] = import_react2.default.useState({ status: "idle" });
+  const [shippingSelected, setShippingSelected] = import_react2.default.useState(true);
+  const [submitAttempted, setSubmitAttempted] = import_react2.default.useState(false);
+  const formErrors = import_react2.default.useMemo(() => validateForm(form), [form]);
   const canSubmit = Object.keys(formErrors).length === 0 && shippingSelected;
-  const addressComplete = form.address.trim().length > 0 && form.city.trim().length > 0 && form.zip.trim().length > 0 && form.country.length > 0;
-  const handleField = import_react.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value })), []);
-  const handleCheckbox = import_react.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.checked })), []);
-  const handleCardNumber = import_react.default.useCallback((e) => {
+  const handleField = import_react2.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.value })), []);
+  const handleCheckbox = import_react2.default.useCallback((field) => (e) => setForm((prev) => ({ ...prev, [field]: e.target.checked })), []);
+  const handleCardNumber = import_react2.default.useCallback((e) => {
     const raw = e.target.value.replace(/\D/g, "").slice(0, 16);
     const formatted = raw.replace(/(.{4})/g, "$1 ").trim();
     setForm((prev) => ({ ...prev, cardNumber: formatted }));
   }, []);
-  const handleCardExpiry = import_react.default.useCallback((e) => {
+  const handleCardExpiry = import_react2.default.useCallback((e) => {
     let raw = e.target.value.replace(/\D/g, "").slice(0, 4);
     if (raw.length > 2)
       raw = `${raw.slice(0, 2)}/${raw.slice(2)}`;
     setForm((prev) => ({ ...prev, cardExpiry: raw }));
   }, []);
-  const handleBlur = import_react.default.useCallback((field) => () => setTouched((prev) => ({ ...prev, [field]: true })), []);
+  const handleBlur = import_react2.default.useCallback((field) => () => setTouched((prev) => ({ ...prev, [field]: true })), []);
   const showError = (field) => touched[field] || submitAttempted ? formErrors[field] : undefined;
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -19463,6 +19478,8 @@ function Checkout() {
     }
     setSubmitState({ status: "loading" });
     fetch("/api/checkout", { method: "POST" }).then((res) => {
+      if (res.status === 409)
+        throw new Error("already_checked_out");
       if (!res.ok)
         throw new Error(`HTTP ${res.status}`);
       return res.json();
@@ -19486,64 +19503,801 @@ function Checkout() {
         appendSessionOrder(json.data.purchaseOrders, shippingAddress);
         navigate("/confirmation", { state: confirmState });
       } else {
-        setSubmitState({ status: "error", message: json.error });
+        setSubmitState({ status: "error", message: json.error.message });
       }
-    }).catch(() => setSubmitState({ status: "error", message: "Checkout failed. Please try again." }));
+    }).catch((err) => {
+      const message = err instanceof Error && err.message === "already_checked_out" ? "This order has already been placed. Please refresh to start a new cart." : "Checkout failed. Please try again.";
+      setSubmitState({ status: "error", message });
+    });
   };
+  return {
+    form,
+    touched,
+    submitState,
+    submitAttempted,
+    shippingSelected,
+    setShippingSelected,
+    formErrors,
+    canSubmit,
+    handleField,
+    handleCheckbox,
+    handleCardNumber,
+    handleCardExpiry,
+    handleBlur,
+    handleSubmit,
+    showError
+  };
+}
+
+// public/pages/checkout/CheckoutForm.tsx
+var jsx_dev_runtime = __toESM(require_jsx_dev_runtime(), 1);
+var LABEL_CLASS = "absolute left-0 -top-4 text-xs text-outline font-label pointer-events-none " + "peer-placeholder-shown:top-3 peer-placeholder-shown:text-base " + "peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary " + "transition-all duration-200";
+var INPUT_CLASS = "w-full bg-transparent border-0 border-b border-outline-variant/20 " + "focus:border-primary focus:ring-0 text-on-surface px-0 py-3 " + "peer transition-colors placeholder-transparent";
+function CheckoutForm({
+  form,
+  touched,
+  submitState,
+  submitAttempted,
+  shippingSelected,
+  setShippingSelected,
+  formErrors,
+  canSubmit,
+  handleField,
+  handleCheckbox,
+  handleCardNumber,
+  handleCardExpiry,
+  handleBlur,
+  handleSubmit,
+  showError,
+  shippingCost,
+  symbol,
+  currency
+}) {
+  return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("form", {
+    className: "lg:col-span-7 space-y-16",
+    onSubmit: handleSubmit,
+    children: [
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
+        className: "bg-surface-container-low p-8 rounded-xl",
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
+            className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-8",
+            children: "Contact Information"
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+            className: "space-y-6",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "relative pt-4",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                    className: INPUT_CLASS,
+                    id: "email",
+                    placeholder: "Email Address",
+                    type: "email",
+                    value: form.email,
+                    onChange: handleField("email"),
+                    onBlur: handleBlur("email")
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                    className: LABEL_CLASS,
+                    htmlFor: "email",
+                    children: "Email Address"
+                  }, undefined, false, undefined, this),
+                  showError("email") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                    role: "alert",
+                    className: "mt-1 text-xs text-red-500",
+                    children: showError("email")
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "flex items-center gap-3",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                    className: "rounded-DEFAULT border-outline-variant/50 text-primary focus:ring-primary bg-transparent w-4 h-4",
+                    id: "newsletter",
+                    type: "checkbox",
+                    checked: form.newsletter,
+                    onChange: handleCheckbox("newsletter")
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                    className: "font-body text-sm text-on-surface-variant",
+                    htmlFor: "newsletter",
+                    children: "Email me with news and eco-packaging offers"
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this)
+            ]
+          }, undefined, true, undefined, this)
+        ]
+      }, undefined, true, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
+        className: "bg-surface-container-low p-8 rounded-xl",
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
+            className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-8",
+            children: "Delivery"
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+            className: "space-y-6",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "relative",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                    className: "block text-xs text-outline font-label mb-1",
+                    htmlFor: "country",
+                    children: "Country"
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("select", {
+                    className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body",
+                    id: "country",
+                    value: form.country,
+                    onChange: handleField("country"),
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
+                        value: "NZ",
+                        children: "New Zealand"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
+                        value: "AU",
+                        children: "Australia"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
+                        value: "US",
+                        children: "United States"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
+                        value: "CA",
+                        children: "Canada"
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
+                        value: "GB",
+                        children: "United Kingdom"
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                    className: "material-symbols-outlined absolute right-0 bottom-3 text-outline pointer-events-none",
+                    "data-icon": "expand_more",
+                    children: "expand_more"
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "grid grid-cols-1 md:grid-cols-2 gap-6",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "relative pt-4",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        className: INPUT_CLASS,
+                        id: "firstName",
+                        placeholder: "First Name",
+                        type: "text",
+                        value: form.firstName,
+                        onChange: handleField("firstName"),
+                        onBlur: handleBlur("firstName")
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                        className: LABEL_CLASS,
+                        htmlFor: "firstName",
+                        children: "First Name"
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "relative pt-4",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        className: INPUT_CLASS,
+                        id: "lastName",
+                        placeholder: "Last Name",
+                        type: "text",
+                        value: form.lastName,
+                        onChange: handleField("lastName"),
+                        onBlur: handleBlur("lastName")
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                        className: LABEL_CLASS,
+                        htmlFor: "lastName",
+                        children: "Last Name"
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "relative pt-4",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                    className: INPUT_CLASS,
+                    id: "address",
+                    placeholder: "Address Line 1",
+                    type: "text",
+                    value: form.address,
+                    onChange: handleField("address"),
+                    onBlur: handleBlur("address")
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                    className: LABEL_CLASS,
+                    htmlFor: "address",
+                    children: "Address Line 1"
+                  }, undefined, false, undefined, this),
+                  showError("address") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                    role: "alert",
+                    className: "mt-1 text-xs text-red-500",
+                    children: showError("address")
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "relative pt-4",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                    className: INPUT_CLASS,
+                    id: "apartment",
+                    placeholder: "Apartment, suite, etc. (optional)",
+                    type: "text",
+                    value: form.apartment,
+                    onChange: handleField("apartment")
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                    className: LABEL_CLASS,
+                    htmlFor: "apartment",
+                    children: "Apartment, suite, etc. (optional)"
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "grid grid-cols-1 md:grid-cols-3 gap-6",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "relative pt-4",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        className: INPUT_CLASS,
+                        id: "city",
+                        placeholder: "City",
+                        type: "text",
+                        value: form.city,
+                        onChange: handleField("city"),
+                        onBlur: handleBlur("city")
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                        className: LABEL_CLASS,
+                        htmlFor: "city",
+                        children: "City"
+                      }, undefined, false, undefined, this),
+                      showError("city") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                        role: "alert",
+                        className: "mt-1 text-xs text-red-500",
+                        children: showError("city")
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "relative pt-4",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        className: INPUT_CLASS,
+                        id: "state",
+                        placeholder: "State / Region",
+                        type: "text",
+                        value: form.state,
+                        onChange: handleField("state")
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                        className: LABEL_CLASS,
+                        htmlFor: "state",
+                        children: "State / Region"
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "relative pt-4",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        className: INPUT_CLASS,
+                        id: "zip",
+                        placeholder: "Postcode",
+                        type: "text",
+                        value: form.zip,
+                        onChange: handleField("zip"),
+                        onBlur: handleBlur("zip")
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                        className: LABEL_CLASS,
+                        htmlFor: "zip",
+                        children: "Postcode"
+                      }, undefined, false, undefined, this),
+                      showError("zip") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                        role: "alert",
+                        className: "mt-1 text-xs text-red-500",
+                        children: showError("zip")
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this)
+                ]
+              }, undefined, true, undefined, this)
+            ]
+          }, undefined, true, undefined, this)
+        ]
+      }, undefined, true, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
+        className: "bg-surface-container-low p-8 rounded-xl",
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
+            className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-6",
+            children: "Shipping method"
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+            className: "flex items-center gap-4 p-4 border rounded-lg border-primary bg-primary/5",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                type: "radio",
+                name: "shipping",
+                className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
+                checked: shippingSelected,
+                onChange: () => setShippingSelected(true)
+              }, undefined, false, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "flex-grow",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "font-body text-on-surface font-medium",
+                    children: "Standard Shipping"
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "font-body text-xs text-on-surface-variant mt-0.5",
+                    children: "Estimated 3–5 business days"
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "font-label font-semibold text-on-surface",
+                children: shippingCost !== null ? `${currency} ${symbol}${shippingCost.toFixed(2)}` : "—"
+              }, undefined, false, undefined, this)
+            ]
+          }, undefined, true, undefined, this)
+        ]
+      }, undefined, true, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
+        className: "bg-surface-container-low p-8 rounded-xl",
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
+            className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-2",
+            children: "Payment"
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+            className: "font-body text-sm text-on-surface-variant mb-6",
+            children: "All transactions are secure and encrypted."
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+            className: "border border-primary rounded-xl overflow-hidden",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "flex items-center gap-4 p-4 bg-primary/5",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                    className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
+                    name: "payment",
+                    type: "radio",
+                    checked: true,
+                    readOnly: true
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "flex-grow font-body text-on-surface font-medium",
+                    children: "Credit card"
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                    className: "material-symbols-outlined text-xl text-outline",
+                    "data-icon": "credit_card",
+                    children: "credit_card"
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                className: "p-6 border-t border-outline-variant/10 bg-surface space-y-6",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "relative pt-4",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        className: INPUT_CLASS,
+                        id: "cardNumber",
+                        placeholder: "Card number",
+                        type: "text",
+                        inputMode: "numeric",
+                        maxLength: 19,
+                        autoComplete: "cc-number",
+                        value: form.cardNumber,
+                        onChange: handleCardNumber,
+                        onBlur: handleBlur("cardNumber")
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                        className: LABEL_CLASS,
+                        htmlFor: "cardNumber",
+                        children: "Card number"
+                      }, undefined, false, undefined, this),
+                      showError("cardNumber") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                        role: "alert",
+                        className: "mt-1 text-xs text-red-500",
+                        children: showError("cardNumber")
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "relative pt-4",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                        className: INPUT_CLASS,
+                        id: "cardName",
+                        placeholder: "Cardholder name",
+                        type: "text",
+                        autoComplete: "cc-name",
+                        value: form.cardName,
+                        onChange: handleField("cardName"),
+                        onBlur: handleBlur("cardName")
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                        className: LABEL_CLASS,
+                        htmlFor: "cardName",
+                        children: "Cardholder name"
+                      }, undefined, false, undefined, this),
+                      showError("cardName") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                        role: "alert",
+                        className: "mt-1 text-xs text-red-500",
+                        children: showError("cardName")
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                    className: "grid grid-cols-2 gap-6",
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "relative pt-4",
+                        children: [
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                            className: INPUT_CLASS,
+                            id: "cardExpiry",
+                            placeholder: "MM/YY",
+                            type: "text",
+                            inputMode: "numeric",
+                            maxLength: 5,
+                            autoComplete: "cc-exp",
+                            value: form.cardExpiry,
+                            onChange: handleCardExpiry,
+                            onBlur: handleBlur("cardExpiry")
+                          }, undefined, false, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                            className: LABEL_CLASS,
+                            htmlFor: "cardExpiry",
+                            children: "Expiry (MM/YY)"
+                          }, undefined, false, undefined, this),
+                          showError("cardExpiry") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                            role: "alert",
+                            className: "mt-1 text-xs text-red-500",
+                            children: showError("cardExpiry")
+                          }, undefined, false, undefined, this)
+                        ]
+                      }, undefined, true, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+                        className: "relative pt-4",
+                        children: [
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
+                            className: INPUT_CLASS,
+                            id: "cardCvv",
+                            placeholder: "CVV",
+                            type: "password",
+                            inputMode: "numeric",
+                            maxLength: 4,
+                            autoComplete: "cc-csc",
+                            value: form.cardCvv,
+                            onChange: handleField("cardCvv"),
+                            onBlur: handleBlur("cardCvv")
+                          }, undefined, false, undefined, this),
+                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
+                            className: LABEL_CLASS,
+                            htmlFor: "cardCvv",
+                            children: "CVV"
+                          }, undefined, false, undefined, this),
+                          showError("cardCvv") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                            role: "alert",
+                            className: "mt-1 text-xs text-red-500",
+                            children: showError("cardCvv")
+                          }, undefined, false, undefined, this)
+                        ]
+                      }, undefined, true, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this)
+                ]
+              }, undefined, true, undefined, this)
+            ]
+          }, undefined, true, undefined, this)
+        ]
+      }, undefined, true, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+        className: "flex flex-col-reverse md:flex-row justify-between items-center gap-6 pt-8",
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+            type: "button",
+            className: "font-headline font-semibold text-tertiary flex items-center gap-2 hover:text-tertiary-container transition-colors",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                className: "material-symbols-outlined text-sm",
+                "data-icon": "chevron_left",
+                children: "chevron_left"
+              }, undefined, false, undefined, this),
+              "Return to cart"
+            ]
+          }, undefined, true, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+            className: "flex flex-col items-end gap-2 w-full md:w-auto",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                type: "submit",
+                disabled: submitState.status === "loading",
+                className: `w-full md:w-auto font-headline font-bold py-4 px-10 rounded-xl transition-all text-center ${canSubmit && submitState.status !== "loading" ? "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:opacity-90 cursor-pointer" : "bg-surface-container-highest text-on-surface-variant opacity-50 cursor-not-allowed"}`,
+                children: submitState.status === "loading" ? "Processing…" : "Pay now"
+              }, undefined, false, undefined, this),
+              submitState.status === "error" && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                className: "text-sm text-red-600 font-body",
+                children: submitState.message
+              }, undefined, false, undefined, this),
+              submitAttempted && !canSubmit && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+                className: "text-sm text-red-500 font-body",
+                children: !shippingSelected && Object.keys(formErrors).length === 0 ? "Please select a shipping method." : "Please complete all required fields."
+              }, undefined, false, undefined, this)
+            ]
+          }, undefined, true, undefined, this)
+        ]
+      }, undefined, true, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
+}
+
+// public/pages/checkout/OrderSummary.tsx
+var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
+var INPUT_CLASS2 = "w-full bg-transparent border-0 border-b border-outline-variant/20 " + "focus:border-primary focus:ring-0 text-on-surface px-0 py-3 " + "peer transition-colors placeholder-transparent";
+var LABEL_CLASS2 = "absolute left-0 -top-4 text-xs text-outline font-label pointer-events-none " + "peer-placeholder-shown:top-3 peer-placeholder-shown:text-base " + "peer-focus:-top-4 peer-focus:text-xs peer-focus:text-primary " + "transition-all duration-200";
+function OrderSummary({ cartState, shippingSelected, subtotal, shippingCost, total, symbol, currency }) {
+  return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+    className: "lg:col-span-5 relative",
+    children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+      className: "sticky top-28 bg-surface-container-low p-8 rounded-xl flex flex-col gap-8 shadow-[0_12px_40px_-15px_rgba(27,28,28,0.05)]",
+      children: [
+        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
+          className: "font-headline text-xl font-bold tracking-tight text-on-surface",
+          children: "Order Archive"
+        }, undefined, false, undefined, this),
+        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+          className: "space-y-6",
+          children: cartState.status === "idle" || cartState.status === "loading" ? [1, 2, 3].map((i) => /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            className: "flex gap-4 items-start animate-pulse",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                className: "w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg"
+              }, undefined, false, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                className: "flex-grow space-y-2 py-2",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "h-4 bg-surface-container rounded w-3/4"
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "h-3 bg-surface-container rounded w-1/2"
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "h-3 bg-surface-container rounded w-1/4 mt-2"
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this)
+            ]
+          }, i, true, undefined, this)) : cartState.status === "error" ? /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            className: "bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                className: "material-symbols-outlined text-outline",
+                children: "error"
+              }, undefined, false, undefined, this),
+              cartState.message
+            ]
+          }, undefined, true, undefined, this) : cartState.data.suppliers.length === 0 ? /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            className: "bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                className: "material-symbols-outlined text-outline",
+                children: "shopping_cart"
+              }, undefined, false, undefined, this),
+              "Your cart is empty."
+            ]
+          }, undefined, true, undefined, this) : cartState.data.suppliers.flatMap((supplier) => supplier.products.map((product) => /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            className: "flex gap-4 items-start",
+            children: [
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                className: "relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden flex items-center justify-center text-outline",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                    className: "material-symbols-outlined text-2xl",
+                    children: product.type === "Custom" ? "brush" : "inventory_2"
+                  }, undefined, false, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                    className: "absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full",
+                    children: product.quantity >= 1000 ? `${Math.floor(product.quantity / 1000)}k` : product.quantity
+                  }, undefined, false, undefined, this)
+                ]
+              }, undefined, true, undefined, this),
+              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                className: "flex-grow flex flex-col justify-between h-20 py-1",
+                children: [
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    children: [
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h4", {
+                        className: "font-body font-medium text-on-surface line-clamp-2",
+                        children: product.name
+                      }, undefined, false, undefined, this),
+                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
+                        className: "font-label text-xs text-on-surface-variant mt-1 line-clamp-1",
+                        children: product.description
+                      }, undefined, false, undefined, this)
+                    ]
+                  }, undefined, true, undefined, this),
+                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    className: "font-label text-sm text-on-surface font-medium",
+                    children: [
+                      product.symbol,
+                      product.total.toFixed(2)
+                    ]
+                  }, undefined, true, undefined, this)
+                ]
+              }, undefined, true, undefined, this)
+            ]
+          }, product.sku, true, undefined, this)))
+        }, undefined, false, undefined, this),
+        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+          className: "flex gap-3",
+          children: [
+            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+              className: "relative flex-grow pt-4",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("input", {
+                  className: INPUT_CLASS2,
+                  id: "discount",
+                  placeholder: "Discount code",
+                  type: "text"
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("label", {
+                  className: LABEL_CLASS2,
+                  htmlFor: "discount",
+                  children: "Discount code"
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this),
+            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("button", {
+              type: "button",
+              className: "bg-surface-container-high text-on-surface font-headline font-semibold px-6 py-2 rounded-lg hover:bg-surface-dim transition-colors self-end h-[42px]",
+              children: "Apply"
+            }, undefined, false, undefined, this)
+          ]
+        }, undefined, true, undefined, this),
+        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+          className: "space-y-3 pt-6 border-t border-outline-variant/10",
+          children: [
+            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+              className: "flex justify-between items-center font-body text-sm text-on-surface-variant",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  children: "Subtotal"
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  className: "font-label text-on-surface",
+                  children: subtotal !== null ? `${symbol}${subtotal.toFixed(2)}` : "—"
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this),
+            shippingSelected && /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+              className: "flex justify-between items-center font-body text-sm text-on-surface-variant",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  children: "Shipping"
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  className: "font-label text-on-surface",
+                  children: shippingCost !== null ? `${symbol}${shippingCost.toFixed(2)}` : "—"
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this)
+          ]
+        }, undefined, true, undefined, this),
+        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+          className: "flex justify-between items-end pt-6 border-t border-outline-variant/10",
+          children: [
+            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+              className: "font-headline font-bold text-lg text-on-surface",
+              children: "Total"
+            }, undefined, false, undefined, this),
+            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+              className: "flex items-baseline gap-2",
+              children: [
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  className: "font-label text-xs text-on-surface-variant",
+                  children: currency
+                }, undefined, false, undefined, this),
+                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  className: "font-headline font-black text-3xl tracking-tight text-primary",
+                  children: total !== null ? `${symbol}${total.toFixed(2)}` : "—"
+                }, undefined, false, undefined, this)
+              ]
+            }, undefined, true, undefined, this)
+          ]
+        }, undefined, true, undefined, this)
+      ]
+    }, undefined, true, undefined, this)
+  }, undefined, false, undefined, this);
+}
+
+// public/pages/checkout/Checkout.tsx
+var jsx_dev_runtime3 = __toESM(require_jsx_dev_runtime(), 1);
+function Checkout() {
+  const cartState = useCart();
+  const checkoutForm = useCheckoutForm();
   const subtotal = cartState.status === "success" ? cartState.data.grandTotal : null;
-  const total = subtotal !== null ? subtotal + (shippingSelected ? SHIPPING_COST : 0) : null;
+  const shippingCost = cartState.status === "success" ? cartState.data.shippingTotal : null;
+  const total = subtotal !== null && shippingCost !== null ? subtotal + (checkoutForm.shippingSelected ? shippingCost : 0) : null;
   const symbol = cartState.status === "success" ? cartState.data.symbol : "$";
   const currency = cartState.status === "success" ? cartState.data.currency : "NZD";
-  return /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
     className: "bg-background text-on-background font-body antialiased min-h-screen flex flex-col",
     children: [
-      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("header", {
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("header", {
         className: "bg-[#fcf9f8]/80 dark:bg-[#1b1c1c]/80 backdrop-blur-xl w-full sticky top-0 z-50",
         children: [
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
             className: "grid grid-cols-3 items-center w-full px-6 py-4 max-w-7xl mx-auto",
             children: [
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("nav", {
+              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("nav", {
                 className: "hidden md:flex gap-6",
                 children: [
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+                  /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                     className: "font-['Manrope'] tracking-tighter font-bold uppercase text-sm text-[#717976] dark:text-[#a0a8a5] hover:text-[#02251f] dark:hover:text-[#ffffff] transition-colors duration-300",
                     href: "#",
                     children: "Shop"
                   }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+                  /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                     className: "font-['Manrope'] tracking-tighter font-bold uppercase text-sm text-[#717976] dark:text-[#a0a8a5] hover:text-[#02251f] dark:hover:text-[#ffffff] transition-colors duration-300",
                     href: "#",
                     children: "Sustainability"
                   }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+                  /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                     className: "font-['Manrope'] tracking-tighter font-bold uppercase text-sm text-[#717976] dark:text-[#a0a8a5] hover:text-[#02251f] dark:hover:text-[#ffffff] transition-colors duration-300",
                     href: "#",
                     children: "Customizer"
                   }, undefined, false, undefined, this)
                 ]
               }, undefined, true, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                 className: "font-['Manrope'] text-2xl font-black tracking-[-0.04em] text-[#02251f] dark:text-[#fcf9f8] justify-self-center",
                 href: "#",
                 children: "noissue"
               }, undefined, false, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
                 className: "flex gap-4 items-center justify-self-end",
                 children: [
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                  /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
                     type: "button",
                     className: "text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200",
-                    children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                    children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
                       className: "material-symbols-outlined",
                       "data-icon": "shopping_bag",
                       children: "shopping_bag"
                     }, undefined, false, undefined, this)
                   }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
+                  /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
                     type: "button",
                     className: "text-[#02251f] dark:text-[#fcf9f8] scale-95 active:opacity-80 transition-all duration-200",
-                    children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
+                    children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
                       className: "material-symbols-outlined",
                       "data-icon": "person",
                       children: "person"
@@ -19553,731 +20307,66 @@ function Checkout() {
               }, undefined, true, undefined, this)
             ]
           }, undefined, true, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
             className: "bg-[#e5e2e1] dark:bg-[#2d2e2e] h-[1px] w-full opacity-20"
           }, undefined, false, undefined, this)
         ]
       }, undefined, true, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("main", {
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("main", {
         className: "flex-grow w-full max-w-7xl mx-auto px-6 py-12 md:py-24 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24 relative",
         children: [
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("form", {
-            className: "lg:col-span-7 space-y-16",
-            onSubmit: handleSubmit,
-            children: [
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl",
-                children: [
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
-                    className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-8",
-                    children: "Contact Information"
-                  }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "space-y-6",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative pt-4",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: INPUT_CLASS,
-                            id: "email",
-                            placeholder: "Email Address",
-                            type: "email",
-                            value: form.email,
-                            onChange: handleField("email"),
-                            onBlur: handleBlur("email")
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: LABEL_CLASS,
-                            htmlFor: "email",
-                            children: "Email Address"
-                          }, undefined, false, undefined, this),
-                          showError("email") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                            role: "alert",
-                            className: "mt-1 text-xs text-red-500",
-                            children: showError("email")
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "flex items-center gap-3",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: "rounded-DEFAULT border-outline-variant/50 text-primary focus:ring-primary bg-transparent w-4 h-4",
-                            id: "newsletter",
-                            type: "checkbox",
-                            checked: form.newsletter,
-                            onChange: handleCheckbox("newsletter")
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: "font-body text-sm text-on-surface-variant",
-                            htmlFor: "newsletter",
-                            children: "Email me with news and eco-packaging offers"
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this)
-                    ]
-                  }, undefined, true, undefined, this)
-                ]
-              }, undefined, true, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl",
-                children: [
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
-                    className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-8",
-                    children: "Delivery"
-                  }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "space-y-6",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: "block text-xs text-outline font-label mb-1",
-                            htmlFor: "country",
-                            children: "Country"
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("select", {
-                            className: "w-full bg-transparent border-0 border-b border-outline-variant/20 focus:border-primary focus:ring-0 text-on-surface px-0 py-3 appearance-none font-body",
-                            id: "country",
-                            value: form.country,
-                            onChange: handleField("country"),
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                value: "NZ",
-                                children: "New Zealand"
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                value: "AU",
-                                children: "Australia"
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                value: "US",
-                                children: "United States"
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                value: "CA",
-                                children: "Canada"
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("option", {
-                                value: "GB",
-                                children: "United Kingdom"
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                            className: "material-symbols-outlined absolute right-0 bottom-3 text-outline pointer-events-none",
-                            "data-icon": "expand_more",
-                            children: "expand_more"
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "grid grid-cols-1 md:grid-cols-2 gap-6",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative pt-4",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: INPUT_CLASS,
-                                id: "firstName",
-                                placeholder: "First Name",
-                                type: "text",
-                                value: form.firstName,
-                                onChange: handleField("firstName"),
-                                onBlur: handleBlur("firstName")
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: LABEL_CLASS,
-                                htmlFor: "firstName",
-                                children: "First Name"
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative pt-4",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: INPUT_CLASS,
-                                id: "lastName",
-                                placeholder: "Last Name",
-                                type: "text",
-                                value: form.lastName,
-                                onChange: handleField("lastName"),
-                                onBlur: handleBlur("lastName")
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: LABEL_CLASS,
-                                htmlFor: "lastName",
-                                children: "Last Name"
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative pt-4",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: INPUT_CLASS,
-                            id: "address",
-                            placeholder: "Address Line 1",
-                            type: "text",
-                            value: form.address,
-                            onChange: handleField("address"),
-                            onBlur: handleBlur("address")
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: LABEL_CLASS,
-                            htmlFor: "address",
-                            children: "Address Line 1"
-                          }, undefined, false, undefined, this),
-                          showError("address") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                            role: "alert",
-                            className: "mt-1 text-xs text-red-500",
-                            children: showError("address")
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative pt-4",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: INPUT_CLASS,
-                            id: "apartment",
-                            placeholder: "Apartment, suite, etc. (optional)",
-                            type: "text",
-                            value: form.apartment,
-                            onChange: handleField("apartment")
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                            className: LABEL_CLASS,
-                            htmlFor: "apartment",
-                            children: "Apartment, suite, etc. (optional)"
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "grid grid-cols-1 md:grid-cols-3 gap-6",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative pt-4",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: INPUT_CLASS,
-                                id: "city",
-                                placeholder: "City",
-                                type: "text",
-                                value: form.city,
-                                onChange: handleField("city"),
-                                onBlur: handleBlur("city")
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: LABEL_CLASS,
-                                htmlFor: "city",
-                                children: "City"
-                              }, undefined, false, undefined, this),
-                              showError("city") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                role: "alert",
-                                className: "mt-1 text-xs text-red-500",
-                                children: showError("city")
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative pt-4",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: INPUT_CLASS,
-                                id: "state",
-                                placeholder: "State / Region",
-                                type: "text",
-                                value: form.state,
-                                onChange: handleField("state")
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: LABEL_CLASS,
-                                htmlFor: "state",
-                                children: "State / Region"
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative pt-4",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: INPUT_CLASS,
-                                id: "zip",
-                                placeholder: "Postcode",
-                                type: "text",
-                                value: form.zip,
-                                onChange: handleField("zip"),
-                                onBlur: handleBlur("zip")
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: LABEL_CLASS,
-                                htmlFor: "zip",
-                                children: "Postcode"
-                              }, undefined, false, undefined, this),
-                              showError("zip") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                role: "alert",
-                                className: "mt-1 text-xs text-red-500",
-                                children: showError("zip")
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this)
-                    ]
-                  }, undefined, true, undefined, this)
-                ]
-              }, undefined, true, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl",
-                children: [
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
-                    className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-6",
-                    children: "Shipping method"
-                  }, undefined, false, undefined, this),
-                  !addressComplete ? /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                        className: "material-symbols-outlined text-outline",
-                        "data-icon": "info",
-                        children: "info"
-                      }, undefined, false, undefined, this),
-                      "Enter your shipping address to view available shipping methods."
-                    ]
-                  }, undefined, true, undefined, this) : /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                    className: `flex items-center gap-4 p-4 border rounded-lg cursor-pointer transition-colors ${shippingSelected ? "border-primary bg-primary/5" : "border-outline-variant/30 bg-surface hover:bg-surface-container-highest"}`,
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                        type: "radio",
-                        name: "shipping",
-                        className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
-                        checked: shippingSelected,
-                        onChange: () => setShippingSelected(true)
-                      }, undefined, false, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "flex-grow",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "font-body text-on-surface font-medium",
-                            children: "Standard Shipping"
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "font-body text-xs text-on-surface-variant mt-0.5",
-                            children: "Estimated 3–5 business days"
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "font-label font-semibold text-on-surface",
-                        children: "NZD $50.00"
-                      }, undefined, false, undefined, this)
-                    ]
-                  }, undefined, true, undefined, this)
-                ]
-              }, undefined, true, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("section", {
-                className: "bg-surface-container-low p-8 rounded-xl",
-                children: [
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h2", {
-                    className: "font-headline text-2xl font-bold tracking-tight text-on-surface mb-2",
-                    children: "Payment"
-                  }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                    className: "font-body text-sm text-on-surface-variant mb-6",
-                    children: "All transactions are secure and encrypted."
-                  }, undefined, false, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "border border-primary rounded-xl overflow-hidden",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "flex items-center gap-4 p-4 bg-primary/5",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                            className: "text-primary focus:ring-primary w-5 h-5 bg-transparent border-outline",
-                            name: "payment",
-                            type: "radio",
-                            checked: true,
-                            readOnly: true
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "flex-grow font-body text-on-surface font-medium",
-                            children: "Credit card"
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                            className: "material-symbols-outlined text-xl text-outline",
-                            "data-icon": "credit_card",
-                            children: "credit_card"
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "p-6 border-t border-outline-variant/10 bg-surface space-y-6",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative pt-4",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: INPUT_CLASS,
-                                id: "cardNumber",
-                                placeholder: "Card number",
-                                type: "text",
-                                inputMode: "numeric",
-                                maxLength: 19,
-                                autoComplete: "cc-number",
-                                value: form.cardNumber,
-                                onChange: handleCardNumber,
-                                onBlur: handleBlur("cardNumber")
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: LABEL_CLASS,
-                                htmlFor: "cardNumber",
-                                children: "Card number"
-                              }, undefined, false, undefined, this),
-                              showError("cardNumber") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                role: "alert",
-                                className: "mt-1 text-xs text-red-500",
-                                children: showError("cardNumber")
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "relative pt-4",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                className: INPUT_CLASS,
-                                id: "cardName",
-                                placeholder: "Cardholder name",
-                                type: "text",
-                                autoComplete: "cc-name",
-                                value: form.cardName,
-                                onChange: handleField("cardName"),
-                                onBlur: handleBlur("cardName")
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                className: LABEL_CLASS,
-                                htmlFor: "cardName",
-                                children: "Cardholder name"
-                              }, undefined, false, undefined, this),
-                              showError("cardName") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                role: "alert",
-                                className: "mt-1 text-xs text-red-500",
-                                children: showError("cardName")
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "grid grid-cols-2 gap-6",
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                                className: "relative pt-4",
-                                children: [
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                    className: INPUT_CLASS,
-                                    id: "cardExpiry",
-                                    placeholder: "MM/YY",
-                                    type: "text",
-                                    inputMode: "numeric",
-                                    maxLength: 5,
-                                    autoComplete: "cc-exp",
-                                    value: form.cardExpiry,
-                                    onChange: handleCardExpiry,
-                                    onBlur: handleBlur("cardExpiry")
-                                  }, undefined, false, undefined, this),
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                    className: LABEL_CLASS,
-                                    htmlFor: "cardExpiry",
-                                    children: "Expiry (MM/YY)"
-                                  }, undefined, false, undefined, this),
-                                  showError("cardExpiry") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                    role: "alert",
-                                    className: "mt-1 text-xs text-red-500",
-                                    children: showError("cardExpiry")
-                                  }, undefined, false, undefined, this)
-                                ]
-                              }, undefined, true, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                                className: "relative pt-4",
-                                children: [
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                                    className: INPUT_CLASS,
-                                    id: "cardCvv",
-                                    placeholder: "CVV",
-                                    type: "password",
-                                    inputMode: "numeric",
-                                    maxLength: 4,
-                                    autoComplete: "cc-csc",
-                                    value: form.cardCvv,
-                                    onChange: handleField("cardCvv"),
-                                    onBlur: handleBlur("cardCvv")
-                                  }, undefined, false, undefined, this),
-                                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                                    className: LABEL_CLASS,
-                                    htmlFor: "cardCvv",
-                                    children: "CVV"
-                                  }, undefined, false, undefined, this),
-                                  showError("cardCvv") && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                    role: "alert",
-                                    className: "mt-1 text-xs text-red-500",
-                                    children: showError("cardCvv")
-                                  }, undefined, false, undefined, this)
-                                ]
-                              }, undefined, true, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this)
-                    ]
-                  }, undefined, true, undefined, this)
-                ]
-              }, undefined, true, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                className: "flex flex-col-reverse md:flex-row justify-between items-center gap-6 pt-8",
-                children: [
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
-                    type: "button",
-                    className: "font-headline font-semibold text-tertiary flex items-center gap-2 hover:text-tertiary-container transition-colors",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                        className: "material-symbols-outlined text-sm",
-                        "data-icon": "chevron_left",
-                        children: "chevron_left"
-                      }, undefined, false, undefined, this),
-                      "Return to cart"
-                    ]
-                  }, undefined, true, undefined, this),
-                  /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "flex flex-col items-end gap-2 w-full md:w-auto",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
-                        type: "submit",
-                        disabled: submitState.status === "loading",
-                        className: `w-full md:w-auto font-headline font-bold py-4 px-10 rounded-xl transition-all text-center ${canSubmit && submitState.status !== "loading" ? "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:opacity-90 cursor-pointer" : "bg-surface-container-highest text-on-surface-variant opacity-50 cursor-not-allowed"}`,
-                        children: submitState.status === "loading" ? "Processing…" : "Pay now"
-                      }, undefined, false, undefined, this),
-                      submitState.status === "error" && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                        className: "text-sm text-red-600 font-body",
-                        children: submitState.message
-                      }, undefined, false, undefined, this),
-                      submitAttempted && !canSubmit && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                        className: "text-sm text-red-500 font-body",
-                        children: !shippingSelected && Object.keys(formErrors).length === 0 ? "Please select a shipping method." : "Please complete all required fields."
-                      }, undefined, false, undefined, this)
-                    ]
-                  }, undefined, true, undefined, this)
-                ]
-              }, undefined, true, undefined, this)
-            ]
-          }, undefined, true, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-            className: "lg:col-span-5 relative",
-            children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-              className: "sticky top-28 bg-surface-container-low p-8 rounded-xl flex flex-col gap-8 shadow-[0_12px_40px_-15px_rgba(27,28,28,0.05)]",
-              children: [
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h3", {
-                  className: "font-headline text-xl font-bold tracking-tight text-on-surface",
-                  children: "Order Archive"
-                }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                  className: "space-y-6",
-                  children: cartState.status === "idle" || cartState.status === "loading" ? [1, 2, 3].map((i) => /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "flex gap-4 items-start animate-pulse",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg"
-                      }, undefined, false, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "flex-grow space-y-2 py-2",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "h-4 bg-surface-container rounded w-3/4"
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "h-3 bg-surface-container rounded w-1/2"
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "h-3 bg-surface-container rounded w-1/4 mt-2"
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this)
-                    ]
-                  }, i, true, undefined, this)) : cartState.status === "error" ? /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "bg-surface p-6 rounded-lg text-on-surface-variant font-body text-sm flex items-center gap-3",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                        className: "material-symbols-outlined text-outline",
-                        children: "error"
-                      }, undefined, false, undefined, this),
-                      cartState.message
-                    ]
-                  }, undefined, true, undefined, this) : cartState.data.suppliers.flatMap((supplier) => supplier.products.map((product) => /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                    className: "flex gap-4 items-start",
-                    children: [
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "relative w-20 h-20 flex-shrink-0 bg-surface-container rounded-lg overflow-hidden flex items-center justify-center text-outline",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                            className: "material-symbols-outlined text-2xl",
-                            children: product.type === "Custom" ? "brush" : "inventory_2"
-                          }, undefined, false, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                            className: "absolute -top-2 -right-2 bg-outline-variant text-on-surface text-xs font-label w-5 h-5 flex items-center justify-center rounded-full",
-                            children: product.quantity >= 1000 ? `${Math.floor(product.quantity / 1000)}k` : product.quantity
-                          }, undefined, false, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this),
-                      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                        className: "flex-grow flex flex-col justify-between h-20 py-1",
-                        children: [
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            children: [
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("h4", {
-                                className: "font-body font-medium text-on-surface line-clamp-2",
-                                children: product.name
-                              }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
-                                className: "font-label text-xs text-on-surface-variant mt-1 line-clamp-1",
-                                children: product.description
-                              }, undefined, false, undefined, this)
-                            ]
-                          }, undefined, true, undefined, this),
-                          /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                            className: "font-label text-sm text-on-surface font-medium",
-                            children: [
-                              product.symbol,
-                              product.total.toFixed(2)
-                            ]
-                          }, undefined, true, undefined, this)
-                        ]
-                      }, undefined, true, undefined, this)
-                    ]
-                  }, product.sku, true, undefined, this)))
-                }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                  className: "flex gap-3",
-                  children: [
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "relative flex-grow pt-4",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("input", {
-                          className: INPUT_CLASS,
-                          id: "discount",
-                          placeholder: "Discount code",
-                          type: "text"
-                        }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("label", {
-                          className: LABEL_CLASS,
-                          htmlFor: "discount",
-                          children: "Discount code"
-                        }, undefined, false, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("button", {
-                      type: "button",
-                      className: "bg-surface-container-high text-on-surface font-headline font-semibold px-6 py-2 rounded-lg hover:bg-surface-dim transition-colors self-end h-[42px]",
-                      children: "Apply"
-                    }, undefined, false, undefined, this)
-                  ]
-                }, undefined, true, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                  className: "space-y-3 pt-6 border-t border-outline-variant/10",
-                  children: [
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "flex justify-between items-center font-body text-sm text-on-surface-variant",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          children: "Subtotal"
-                        }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          className: "font-label text-on-surface",
-                          children: subtotal !== null ? `${symbol}${subtotal.toFixed(2)}` : "—"
-                        }, undefined, false, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this),
-                    shippingSelected && /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "flex justify-between items-center font-body text-sm text-on-surface-variant",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          children: "Shipping"
-                        }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          className: "font-label text-on-surface",
-                          children: [
-                            symbol,
-                            SHIPPING_COST.toFixed(2)
-                          ]
-                        }, undefined, true, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this)
-                  ]
-                }, undefined, true, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                  className: "flex justify-between items-end pt-6 border-t border-outline-variant/10",
-                  children: [
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                      className: "font-headline font-bold text-lg text-on-surface",
-                      children: "Total"
-                    }, undefined, false, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
-                      className: "flex items-baseline gap-2",
-                      children: [
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          className: "font-label text-xs text-on-surface-variant",
-                          children: currency
-                        }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime.jsxDEV("span", {
-                          className: "font-headline font-black text-3xl tracking-tight text-primary",
-                          children: total !== null ? `${symbol}${total.toFixed(2)}` : "—"
-                        }, undefined, false, undefined, this)
-                      ]
-                    }, undefined, true, undefined, this)
-                  ]
-                }, undefined, true, undefined, this)
-              ]
-            }, undefined, true, undefined, this)
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(CheckoutForm, {
+            ...checkoutForm,
+            shippingCost,
+            symbol,
+            currency
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(OrderSummary, {
+            cartState,
+            shippingSelected: checkoutForm.shippingSelected,
+            subtotal,
+            shippingCost,
+            total,
+            symbol,
+            currency
           }, undefined, false, undefined, this)
         ]
       }, undefined, true, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime.jsxDEV("footer", {
+      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("footer", {
         className: "bg-[#e5e2e1] dark:bg-[#121212] w-full mt-auto",
-        children: /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+        children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
           className: "w-full px-8 py-16 flex flex-col md:flex-row justify-between items-center gap-8 max-w-7xl mx-auto",
           children: [
-            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("p", {
+            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
               className: "font-['Space_Grotesk'] text-[12px] uppercase tracking-widest text-[#02251f] dark:text-[#fcf9f8] opacity-60",
               children: "© 2023 noissue. Low-impact packaging for a circular economy."
             }, undefined, false, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("nav", {
+            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("nav", {
               className: "flex flex-wrap justify-center gap-6",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                   className: "font-['Space_Grotesk'] text-[12px] uppercase tracking-widest text-[#02251f] dark:text-[#fcf9f8] opacity-60 hover:opacity-100 transition-opacity ease-in-out duration-300",
                   href: "#",
                   children: "Eco-Alliance"
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                   className: "font-['Space_Grotesk'] text-[12px] uppercase tracking-widest text-[#02251f] dark:text-[#fcf9f8] opacity-60 hover:opacity-100 transition-opacity ease-in-out duration-300",
                   href: "#",
                   children: "Wholesale"
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                   className: "font-['Space_Grotesk'] text-[12px] uppercase tracking-widest text-[#02251f] dark:text-[#fcf9f8] opacity-60 hover:opacity-100 transition-opacity ease-in-out duration-300",
                   href: "#",
                   children: "Material Archive"
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime.jsxDEV("a", {
+                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("a", {
                   className: "font-['Space_Grotesk'] text-[12px] uppercase tracking-widest text-[#02251f] dark:text-[#fcf9f8] opacity-60 hover:opacity-100 transition-opacity ease-in-out duration-300",
                   href: "#",
                   children: "Privacy"
                 }, undefined, false, undefined, this)
               ]
             }, undefined, true, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
               className: "font-['Manrope'] font-extrabold text-[#02251f] dark:text-[#fcf9f8] text-xl",
               children: "noissue"
             }, undefined, false, undefined, this)
@@ -20287,14 +20376,13 @@ function Checkout() {
     ]
   }, undefined, true, undefined, this);
 }
-
 // public/pages/OrderConfirmation.tsx
-var jsx_dev_runtime2 = __toESM(require_jsx_dev_runtime(), 1);
+var jsx_dev_runtime4 = __toESM(require_jsx_dev_runtime(), 1);
 function OrderConfirmation() {
   const location = useLocation();
   const state = location.state;
   if (!state?.purchaseOrders?.length || !state.shippingAddress) {
-    return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(Navigate, {
+    return /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Navigate, {
       to: "/",
       replace: true
     }, undefined, false, undefined, this);
@@ -20306,49 +20394,49 @@ function OrderConfirmation() {
   const orderTotal = purchaseOrders.reduce((sum, po) => sum + po.orderTotal, 0);
   const { currency, symbol } = purchaseOrders[0];
   const hasAddress = shippingAddress.firstName || shippingAddress.address;
-  return /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+  return /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
     className: "bg-background text-on-background font-body antialiased selection:bg-primary-container selection:text-on-primary-container min-h-screen flex flex-col",
     children: [
-      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("header", {
+      /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("header", {
         className: "w-full flex justify-center py-8 bg-background z-50",
-        children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(Link, {
+        children: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Link, {
           className: "font-headline text-3xl font-black tracking-[-0.04em] text-primary",
           to: "/",
           children: "noissue"
         }, undefined, false, undefined, this)
       }, undefined, false, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("main", {
+      /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("main", {
         className: "flex-grow flex flex-col items-center justify-start px-4 sm:px-6 lg:px-8 py-12 md:py-24",
-        children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+        children: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
           className: "max-w-4xl w-full",
           children: [
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
               className: "text-center mb-16",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                   className: "inline-flex items-center justify-center w-20 h-20 rounded-full bg-secondary-container text-on-secondary-container mb-6",
-                  children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  children: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                     className: "material-symbols-outlined text-4xl",
                     style: { fontVariationSettings: "'FILL' 1" },
                     children: "check_circle"
                   }, undefined, false, undefined, this)
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h1", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("h1", {
                   className: "font-headline text-4xl md:text-5xl font-extrabold tracking-[-0.02em] text-primary mb-4",
                   children: "Order Confirmed."
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("p", {
                   className: "font-body text-lg text-on-surface-variant max-w-xl mx-auto",
                   children: "Your eco-friendly packaging is being prepped for the journey. Thank you for moving toward a circular economy."
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                   className: "mt-6 flex flex-col items-center",
                   children: [
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                    /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                       className: "font-label text-sm text-outline uppercase tracking-widest",
                       children: "Order Reference"
                     }, undefined, false, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                    /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                       className: "font-label text-lg font-semibold text-primary mt-1",
                       children: orderRef
                     }, undefined, false, undefined, this)
@@ -20356,55 +20444,55 @@ function OrderConfirmation() {
                 }, undefined, true, undefined, this)
               ]
             }, undefined, true, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
               className: "grid grid-cols-1 md:grid-cols-12 gap-8 mb-16",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                   className: "md:col-span-8 bg-surface-container-low rounded-none md:rounded-xl p-6 md:p-10 relative overflow-hidden",
                   children: [
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h2", {
+                    /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("h2", {
                       className: "font-headline text-2xl font-bold text-primary mb-8 tracking-tight",
                       children: "The Archive"
                     }, undefined, false, undefined, this),
-                    purchaseOrders.map((po, poIdx) => /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    purchaseOrders.map((po, poIdx) => /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                       className: poIdx < purchaseOrders.length - 1 ? "mb-10" : "",
                       children: [
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                           className: "flex items-center gap-2 mb-4",
                           children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "material-symbols-outlined text-sm text-outline",
                               children: "store"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "font-label text-xs uppercase tracking-widest text-outline",
                               children: po.supplierName
                             }, undefined, false, undefined, this)
                           ]
                         }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                           className: "space-y-8",
-                          children: po.items.map((item, itemIdx) => /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                          children: po.items.map((item, itemIdx) => /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                             className: `flex flex-col sm:flex-row gap-6 ${itemIdx < po.items.length - 1 ? "pb-8 border-b border-outline-variant/10" : ""}`,
                             children: [
-                              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                              /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                                 className: "w-full sm:w-32 h-32 bg-surface-container-highest rounded-lg overflow-hidden shrink-0 flex items-center justify-center text-outline",
-                                children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                children: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                                   className: "material-symbols-outlined text-4xl",
                                   children: item.productType === "Custom" ? "brush" : "inventory_2"
                                 }, undefined, false, undefined, this)
                               }, undefined, false, undefined, this),
-                              /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                              /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                                 className: "flex-grow flex flex-col justify-center",
                                 children: [
-                                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                                  /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                                     className: "flex justify-between items-start mb-2",
                                     children: [
-                                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
+                                      /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("h3", {
                                         className: "font-headline text-lg font-bold text-on-surface",
                                         children: item.productName
                                       }, undefined, false, undefined, this),
-                                      /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                      /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                                         className: "font-label text-md font-semibold text-primary ml-4",
                                         children: [
                                           symbol,
@@ -20413,7 +20501,7 @@ function OrderConfirmation() {
                                       }, undefined, true, undefined, this)
                                     ]
                                   }, undefined, true, undefined, this),
-                                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
+                                  /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("p", {
                                     className: "font-body text-sm text-on-surface-variant mb-3",
                                     children: [
                                       "Qty: ",
@@ -20429,26 +20517,26 @@ function OrderConfirmation() {
                     }, po.poId, true, undefined, this))
                   ]
                 }, undefined, true, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                   className: "md:col-span-4 flex flex-col gap-8",
                   children: [
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                       className: "bg-surface-container-lowest rounded-xl p-8 relative z-10",
                       children: [
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h3", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("h3", {
                           className: "font-headline text-xl font-bold text-primary mb-6",
                           children: "Summary"
                         }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                           className: "space-y-4 font-body text-sm mb-6 pb-6 border-b border-outline-variant/10",
                           children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                               className: "flex justify-between text-on-surface-variant",
                               children: [
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                                   children: "Subtotal"
                                 }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                                   children: [
                                     symbol,
                                     itemsTotal.toFixed(2)
@@ -20456,13 +20544,13 @@ function OrderConfirmation() {
                                 }, undefined, true, undefined, this)
                               ]
                             }, undefined, true, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                               className: "flex justify-between text-on-surface-variant",
                               children: [
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                                   children: "Shipping"
                                 }, undefined, false, undefined, this),
-                                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                                   children: [
                                     symbol,
                                     shippingTotal.toFixed(2)
@@ -20472,14 +20560,14 @@ function OrderConfirmation() {
                             }, undefined, true, undefined, this)
                           ]
                         }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                           className: "flex justify-between items-center mb-8",
                           children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "font-headline font-bold text-on-surface",
                               children: "Total"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "font-label text-xl font-bold text-primary",
                               children: [
                                 currency,
@@ -20492,37 +20580,37 @@ function OrderConfirmation() {
                         }, undefined, true, undefined, this)
                       ]
                     }, undefined, true, undefined, this),
-                    hasAddress && /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    hasAddress && /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                       className: "bg-surface-container-low rounded-xl p-8",
                       children: [
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                           className: "flex items-center gap-3 mb-4 text-primary",
                           children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "material-symbols-outlined",
                               children: "local_shipping"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h4", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("h4", {
                               className: "font-headline font-bold",
                               children: "Shipping To"
                             }, undefined, false, undefined, this)
                           ]
                         }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("address", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("address", {
                           className: "font-body text-sm text-on-surface-variant not-italic leading-relaxed",
                           children: [
                             shippingAddress.firstName,
                             " ",
                             shippingAddress.lastName,
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("br", {}, undefined, false, undefined, this),
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("br", {}, undefined, false, undefined, this),
                             shippingAddress.address,
                             shippingAddress.apartment ? `, ${shippingAddress.apartment}` : "",
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("br", {}, undefined, false, undefined, this),
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("br", {}, undefined, false, undefined, this),
                             shippingAddress.city,
                             shippingAddress.state ? `, ${shippingAddress.state}` : "",
                             " ",
                             shippingAddress.zip,
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("br", {}, undefined, false, undefined, this),
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("br", {}, undefined, false, undefined, this),
                             shippingAddress.country
                           ]
                         }, undefined, true, undefined, this)
@@ -20532,64 +20620,64 @@ function OrderConfirmation() {
                 }, undefined, true, undefined, this)
               ]
             }, undefined, true, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
               className: "bg-primary text-on-primary rounded-xl p-8 md:p-12 overflow-hidden relative",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                   className: "absolute inset-0 opacity-20",
                   style: { background: "radial-gradient(circle at top right, #1a3b34, transparent 70%)" }
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                   className: "relative z-10 grid grid-cols-1 md:grid-cols-2 gap-12 items-center",
                   children: [
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                       children: [
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                           className: "font-label text-sm uppercase tracking-widest text-primary-fixed block mb-4",
                           children: "The Impact"
                         }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("h2", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("h2", {
                           className: "font-headline text-3xl md:text-4xl font-extrabold tracking-tight mb-4",
                           children: "Planting Trees. Packaging Better."
                         }, undefined, false, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("p", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("p", {
                           className: "font-body text-on-primary-fixed-variant text-lg max-w-md",
                           children: "By choosing our compostable and recycled materials, you've contributed to a lower footprint. We're planting a tree with the Eco-Alliance for this order."
                         }, undefined, false, undefined, this)
                       ]
                     }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                    /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                       className: "flex flex-col sm:flex-row gap-6 justify-end items-start md:items-center",
                       children: [
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                           className: "bg-primary-container rounded-lg p-6 flex-1 max-w-[200px]",
                           children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "material-symbols-outlined text-4xl text-primary-fixed mb-3",
                               children: "nature"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "block font-headline font-bold text-xl mb-1",
                               children: "+1 Tree"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "font-label text-xs uppercase tracking-widest text-on-primary-container",
                               children: "Planted"
                             }, undefined, false, undefined, this)
                           ]
                         }, undefined, true, undefined, this),
-                        /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+                        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
                           className: "bg-primary-container rounded-lg p-6 flex-1 max-w-[200px]",
                           children: [
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "material-symbols-outlined text-4xl text-primary-fixed mb-3",
                               children: "recycling"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "block font-headline font-bold text-xl mb-1",
                               children: "100%"
                             }, undefined, false, undefined, this),
-                            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                               className: "font-label text-xs uppercase tracking-widest text-on-primary-container",
                               children: "Circular"
                             }, undefined, false, undefined, this)
@@ -20601,13 +20689,13 @@ function OrderConfirmation() {
                 }, undefined, true, undefined, this)
               ]
             }, undefined, true, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("div", {
               className: "mt-16 text-center",
-              children: /* @__PURE__ */ jsx_dev_runtime2.jsxDEV(Link, {
+              children: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Link, {
                 className: "inline-flex items-center gap-2 font-headline font-semibold text-primary hover:text-surface-tint transition-colors group",
                 to: "/store",
                 children: [
-                  /* @__PURE__ */ jsx_dev_runtime2.jsxDEV("span", {
+                  /* @__PURE__ */ jsx_dev_runtime4.jsxDEV("span", {
                     className: "material-symbols-outlined group-hover:-translate-x-1 transition-transform",
                     children: "arrow_back"
                   }, undefined, false, undefined, this),
@@ -20623,8 +20711,8 @@ function OrderConfirmation() {
 }
 
 // public/pages/Store.tsx
-var import_react2 = __toESM(require_react(), 1);
-var jsx_dev_runtime3 = __toESM(require_jsx_dev_runtime(), 1);
+var import_react3 = __toESM(require_react(), 1);
+var jsx_dev_runtime5 = __toESM(require_jsx_dev_runtime(), 1);
 function formatDate(iso) {
   return new Date(iso).toLocaleString("en-NZ", {
     day: "numeric",
@@ -20638,15 +20726,15 @@ function OrderCard({ order, index }) {
   const grandTotal = order.purchaseOrders.reduce((sum, po) => sum + po.orderTotal, 0);
   const { symbol, currency } = order.purchaseOrders[0];
   const orderRef = `#NI-${order.purchaseOrders[0].poId.toString().padStart(4, "0")}-ECO`;
-  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+  return /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
     className: "bg-surface-container-low rounded-xl p-6 md:p-8",
     children: [
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+      /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
         className: "flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6 pb-6 border-b border-outline-variant/10",
         children: [
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+          /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
             children: [
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+              /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                 className: "font-label text-xs uppercase tracking-widest text-outline block mb-1",
                 children: [
                   "Order ",
@@ -20655,23 +20743,23 @@ function OrderCard({ order, index }) {
                   formatDate(order.placedAt)
                 ]
               }, undefined, true, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+              /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                 className: "font-label text-base font-semibold text-primary",
                 children: orderRef
               }, undefined, false, undefined, this)
             ]
           }, undefined, true, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+          /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
             className: "text-right",
             children: [
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+              /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                 className: "font-label text-xs uppercase tracking-widest text-outline block mb-1",
                 children: [
                   currency,
                   " Total"
                 ]
               }, undefined, true, undefined, this),
-              /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+              /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                 className: "font-headline text-xl font-bold text-on-surface",
                 children: [
                   symbol,
@@ -20682,34 +20770,34 @@ function OrderCard({ order, index }) {
           }, undefined, true, undefined, this)
         ]
       }, undefined, true, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+      /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
         className: "space-y-6",
-        children: order.purchaseOrders.map((po) => /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+        children: order.purchaseOrders.map((po) => /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
           children: [
-            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
               className: "flex items-center gap-2 mb-3",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                   className: "material-symbols-outlined text-sm text-outline",
                   children: "store"
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                   className: "font-label text-xs uppercase tracking-widest text-outline",
                   children: po.supplierName
                 }, undefined, false, undefined, this)
               ]
             }, undefined, true, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
               className: "space-y-2 pl-5",
               children: [
-                po.items.map((item) => /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                po.items.map((item) => /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
                   className: "flex justify-between items-center font-body text-sm",
                   children: [
-                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                    /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                       className: "text-on-surface-variant",
                       children: [
                         item.productName,
-                        /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                        /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                           className: "text-outline ml-2",
                           children: [
                             "×",
@@ -20718,7 +20806,7 @@ function OrderCard({ order, index }) {
                         }, undefined, true, undefined, this)
                       ]
                     }, undefined, true, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                    /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                       className: "text-on-surface font-medium ml-4",
                       children: [
                         symbol,
@@ -20727,13 +20815,13 @@ function OrderCard({ order, index }) {
                     }, undefined, true, undefined, this)
                   ]
                 }, `${po.poId}-${item.productSku}`, true, undefined, this)),
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
                   className: "flex justify-between items-center font-body text-xs text-outline pt-2 border-t border-outline-variant/10",
                   children: [
-                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                    /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                       children: "Shipping"
                     }, undefined, false, undefined, this),
-                    /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                    /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                       children: [
                         symbol,
                         po.shippingFee.toFixed(2)
@@ -20746,14 +20834,14 @@ function OrderCard({ order, index }) {
           ]
         }, po.poId, true, undefined, this))
       }, undefined, false, undefined, this),
-      (order.shippingAddress.firstName || order.shippingAddress.city) && /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+      (order.shippingAddress.firstName || order.shippingAddress.city) && /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
         className: "mt-6 pt-6 border-t border-outline-variant/10 flex items-start gap-2 text-sm font-body text-on-surface-variant",
         children: [
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+          /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
             className: "material-symbols-outlined text-base text-outline mt-0.5",
             children: "local_shipping"
           }, undefined, false, undefined, this),
-          /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+          /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
             children: [
               [order.shippingAddress.firstName, order.shippingAddress.lastName].filter(Boolean).join(" "),
               order.shippingAddress.city ? ` · ${order.shippingAddress.city}` : "",
@@ -20768,7 +20856,7 @@ function OrderCard({ order, index }) {
 function Store() {
   const navigate = useNavigate();
   const orders = getSessionOrders();
-  const [generateState, setGenerateState] = import_react2.default.useState({ status: "idle" });
+  const [generateState, setGenerateState] = import_react3.default.useState({ status: "idle" });
   const handleGenerateCart = () => {
     setGenerateState({ status: "loading" });
     fetch("/api/cart/random", { method: "POST" }).then((res) => {
@@ -20783,74 +20871,74 @@ function Store() {
       }
     }).catch(() => setGenerateState({ status: "error", message: "Could not generate a new cart. Please try again." }));
   };
-  return /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+  return /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
     className: "bg-background text-on-background font-body antialiased min-h-screen flex flex-col",
     children: [
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("header", {
+      /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("header", {
         className: "w-full flex justify-center py-8 bg-background z-50",
-        children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(Link, {
+        children: /* @__PURE__ */ jsx_dev_runtime5.jsxDEV(Link, {
           className: "font-headline text-3xl font-black tracking-[-0.04em] text-primary",
           to: "/",
           children: "noissue"
         }, undefined, false, undefined, this)
       }, undefined, false, undefined, this),
-      /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("main", {
+      /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("main", {
         className: "flex-grow flex flex-col items-center px-4 sm:px-6 lg:px-8 py-12 md:py-20",
-        children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+        children: /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
           className: "max-w-3xl w-full",
           children: [
-            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
               className: "text-center mb-16",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
                   className: "inline-flex items-center justify-center w-20 h-20 rounded-full bg-primary/10 text-primary mb-6",
-                  children: /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("span", {
+                  children: /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("span", {
                     className: "material-symbols-outlined text-4xl",
                     style: { fontVariationSettings: "'FILL' 1" },
                     children: "storefront"
                   }, undefined, false, undefined, this)
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("h1", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("h1", {
                   className: "font-headline text-4xl md:text-5xl font-extrabold tracking-[-0.02em] text-primary mb-4",
                   children: "Checkout Exercise Complete."
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("p", {
                   className: "font-body text-lg text-on-surface-variant max-w-lg mx-auto",
                   children: orders.length === 0 ? "No orders placed yet in this session." : `${orders.length} order${orders.length === 1 ? "" : "s"} placed this session.`
                 }, undefined, false, undefined, this)
               ]
             }, undefined, true, undefined, this),
-            orders.length > 0 && /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("section", {
+            orders.length > 0 && /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("section", {
               className: "mb-16",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("h2", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("h2", {
                   className: "font-headline text-2xl font-bold text-primary mb-6 tracking-tight",
                   children: "Session Orders"
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
                   className: "space-y-6",
-                  children: orders.map((order, i) => /* @__PURE__ */ jsx_dev_runtime3.jsxDEV(OrderCard, {
+                  children: orders.map((order, i) => /* @__PURE__ */ jsx_dev_runtime5.jsxDEV(OrderCard, {
                     order,
                     index: i
                   }, order.id, false, undefined, this))
                 }, undefined, false, undefined, this)
               ]
             }, undefined, true, undefined, this),
-            /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("div", {
+            /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("div", {
               className: "flex flex-col items-center gap-4 text-center",
               children: [
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("button", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("button", {
                   type: "button",
                   onClick: handleGenerateCart,
                   disabled: generateState.status === "loading",
                   className: `font-headline font-bold py-4 px-10 rounded-xl transition-all ${generateState.status === "loading" ? "bg-surface-container-highest text-on-surface-variant opacity-50 cursor-not-allowed" : "bg-gradient-to-r from-primary to-primary-container text-on-primary hover:opacity-90 cursor-pointer"}`,
                   children: generateState.status === "loading" ? "Generating…" : "Generate New Cart"
                 }, undefined, false, undefined, this),
-                generateState.status === "error" && /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
+                generateState.status === "error" && /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("p", {
                   className: "font-body text-sm text-red-500",
                   children: generateState.message
                 }, undefined, false, undefined, this),
-                /* @__PURE__ */ jsx_dev_runtime3.jsxDEV("p", {
+                /* @__PURE__ */ jsx_dev_runtime5.jsxDEV("p", {
                   className: "font-body text-xs text-outline max-w-xs",
                   children: "Picks a random selection from the product catalogue and starts a new checkout run."
                 }, undefined, false, undefined, this)
@@ -20864,26 +20952,36 @@ function Store() {
 }
 
 // public/index.tsx
-var jsx_dev_runtime4 = __toESM(require_jsx_dev_runtime(), 1);
+var jsx_dev_runtime6 = __toESM(require_jsx_dev_runtime(), 1);
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  import_react4.useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
+}
 function App() {
-  return /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(BrowserRouter, {
-    children: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Routes, {
-      children: [
-        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Route, {
-          path: "/",
-          element: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Checkout, {}, undefined, false, undefined, this)
-        }, undefined, false, undefined, this),
-        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Route, {
-          path: "/confirmation",
-          element: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(OrderConfirmation, {}, undefined, false, undefined, this)
-        }, undefined, false, undefined, this),
-        /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Route, {
-          path: "/store",
-          element: /* @__PURE__ */ jsx_dev_runtime4.jsxDEV(Store, {}, undefined, false, undefined, this)
-        }, undefined, false, undefined, this)
-      ]
-    }, undefined, true, undefined, this)
-  }, undefined, false, undefined, this);
+  return /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(BrowserRouter, {
+    children: [
+      /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(ScrollToTop, {}, undefined, false, undefined, this),
+      /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(Routes, {
+        children: [
+          /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(Route, {
+            path: "/",
+            element: /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(Checkout, {}, undefined, false, undefined, this)
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(Route, {
+            path: "/confirmation",
+            element: /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(OrderConfirmation, {}, undefined, false, undefined, this)
+          }, undefined, false, undefined, this),
+          /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(Route, {
+            path: "/store",
+            element: /* @__PURE__ */ jsx_dev_runtime6.jsxDEV(Store, {}, undefined, false, undefined, this)
+          }, undefined, false, undefined, this)
+        ]
+      }, undefined, true, undefined, this)
+    ]
+  }, undefined, true, undefined, this);
 }
 var root = import_client.createRoot(document.getElementById("root"));
-root.render(/* @__PURE__ */ jsx_dev_runtime4.jsxDEV(App, {}, undefined, false, undefined, this));
+root.render(/* @__PURE__ */ jsx_dev_runtime6.jsxDEV(App, {}, undefined, false, undefined, this));
